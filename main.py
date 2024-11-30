@@ -10,23 +10,22 @@ import hashlib
 import re
 import sqlite3
 import os
-from passlib.context import CryptContext  # Example using passlib for password strength
+from passlib.context import CryptContext 
 
-# Global variable to track the logged-in user
-logged_in_user = None
-
-# Initialize password hashing context
+# password hashing context
 crypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class User:
+
     def __init__(self, db):
         self.db = db
 
     def create_account(self, username, password):
         """Creates a new user account."""
         if self.db.is_duplicate(username):
-            messagebox.showerror("Account Creation Failed", "Username already in use.")
+            messagebox.showerror("Account Creation Failed",
+                                 "Username already in use.")
             return
 
         if not self.evaluate_password(password):
@@ -47,15 +46,19 @@ class User:
         if self.db.verify_login(username, password):
             return username
         else:
-            messagebox.showerror("Login Failed", "Invalid username or password")
+            messagebox.showerror("Login Failed",
+                                 "Invalid username or password")
             return None
 
     def evaluate_password(self, password):
         """Evaluates password strength using passlib."""
-        return crypt_context.verify(password, "$2b$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-        )  # Replace with a strong default hash
+        return crypt_context.verify(password,
+                                    "$2b$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                                    )  # Replace with a strong default hash
+
 
 class Credential:
+
     def __init__(self, db):
         self.db = db
 
@@ -64,15 +67,16 @@ class Credential:
         if not twitch and not discord and not steam:
             messagebox.showerror(
                 "Input Error",
-                "Please fill in at least one field for gaming credentials."
-            )
+                "Please fill in at least one field for gaming credentials.")
             return
 
         self.db.store_gaming_credentials(username, twitch, discord, steam)
-        messagebox.showinfo("Success", "Gaming credentials stored successfully!")
+        messagebox.showinfo("Success",
+                            "Gaming credentials stored successfully!")
 
 
 class Database:
+
     def __init__(self, db_name="CyberEsportsApp.db"):
         self.connection = sqlite3.connect(db_name)
         self.cursor = self.connection.cursor()
@@ -88,12 +92,14 @@ class Database:
                               twitch TEXT,
                               discord TEXT,
                               steam TEXT,
-                              FOREIGN KEY (username) REFERENCES users(username))''')
+                              FOREIGN KEY (username) REFERENCES users(username))'''
+                            )
         self.connection.commit()
 
     def is_duplicate(self, username):
         """Checks for duplicate username."""
-        self.cursor.execute("SELECT username FROM users WHERE username = ?", (username,))
+        self.cursor.execute("SELECT username FROM users WHERE username = ?",
+                            (username, ))
         duplicate = self.cursor.fetchone()
         return duplicate is not None
 
@@ -101,8 +107,7 @@ class Database:
         """Verifies login credentials."""
         self.cursor.execute(
             "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-            (username, crypt_context.hash(password))
-        )
+            (username, crypt_context.hash(password)))
         result = self.cursor.fetchone()
         return result is not None
 
@@ -111,8 +116,7 @@ class Database:
         hashed_password = crypt_context.hash(password)
         self.cursor.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-            (username, hashed_password)
-        )
+            (username, hashed_password))
         self.connection.commit()
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
@@ -120,8 +124,7 @@ class Database:
         self.cursor.execute(
             '''INSERT INTO gaming_credentials (username, twitch, discord, steam) 
                               VALUES (?, ?, ?, ?)''',
-            (username, twitch, discord, steam)
-        )
+            (username, twitch, discord, steam))
         self.connection.commit()
 
     def close(self):
@@ -130,6 +133,7 @@ class Database:
 
 
 class Page(tk.Frame):
+
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
@@ -137,32 +141,36 @@ class Page(tk.Frame):
 
 
 class LandingPage(Page):
+
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        self.landing_label = tk.Label(
-            self, text="Welcome to Cyber Esports App", font=("Arial", 16)
-        )
+        self.landing_label = tk.Label(self,
+                                      text="Welcome to Cyber Esports App",
+                                      font=("Arial", 16))
         self.landing_label.pack(pady=20)
 
         self.create_account_button = tk.Button(
-            self, text="Create Account", command=lambda: self.parent.show_page("CreateAccountPage")
-        )
+            self,
+            text="Create Account",
+            command=lambda: self.parent.show_page("CreateAccountPage"))
         self.create_account_button.pack(pady=10)
 
         self.login_button_landing = tk.Button(
-            self, text="Login", command=lambda: self.parent.show_page("LoginPage")
-        )
+            self,
+            text="Login",
+            command=lambda: self.parent.show_page("LoginPage"))
         self.login_button_landing.pack(pady=10)
 
 
 class CreateAccountPage(Page):
+
     def __init__(self, parent, user, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.user = user
 
-        self.create_account_label = tk.Label(
-            self, text="Create Account", font=("Arial", 16)
-        )
+        self.create_account_label = tk.Label(self,
+                                             text="Create Account",
+                                             font=("Arial", 16))
         self.create_account_label.pack(pady=10)
 
         self.username_label_create = tk.Label(self, text="Username:")
@@ -178,12 +186,10 @@ class CreateAccountPage(Page):
         # Password strength instructions
         self.password_instructions = tk.Label(
             self,
-            text=(
-                "Password Strength Requirements:\n"
-                "1. At least 8 characters long (Strong if 13+)\n"
-                "2. At least 1 uppercase and 1 lowercase letter\n"
-                "3. At least 1 number and 1 symbol"
-            ),
+            text=("Password Strength Requirements:\n"
+                  "1. At least 8 characters long (Strong if 13+)\n"
+                  "2. At least 1 uppercase and 1 lowercase letter\n"
+                  "3. At least 1 number and 1 symbol"),
         )
         self.password_instructions.pack(pady=5)
 
@@ -192,18 +198,17 @@ class CreateAccountPage(Page):
         self.password_strength_label_create.pack(pady=5)
 
         # Bind password entry to strength evaluation
-        self.password_entry_create.bind(
-            "<KeyRelease>", self.update_password_strength_create
-        )
+        self.password_entry_create.bind("<KeyRelease>",
+                                        self.update_password_strength_create)
 
         self.create_account_button_final = tk.Button(
-            self, text="Create Account", command=self.create_account
-        )
+            self, text="Create Account", command=self.create_account)
         self.create_account_button_final.pack(pady=20)
 
         self.back_to_landing_button = tk.Button(
-            self, text="Back", command=lambda: self.parent.show_page("LandingPage")
-        )
+            self,
+            text="Back",
+            command=lambda: self.parent.show_page("LandingPage"))
         self.back_to_landing_button.pack(pady=10)
 
     def update_password_strength_create(self, event=None):
@@ -213,12 +218,10 @@ class CreateAccountPage(Page):
 
         if password_strength:
             self.password_strength_label_create.config(
-                text="Password Strength: Strong", fg="green"
-            )
+                text="Password Strength: Strong", fg="green")
         else:
             self.password_strength_label_create.config(
-                text="Password Strength: Invalid", fg="red"
-            )
+                text="Password Strength: Invalid", fg="red")
 
     def create_account(self):
         """Handles account creation."""
@@ -226,10 +229,12 @@ class CreateAccountPage(Page):
         password = self.password_entry_create.get()
 
         if self.user.create_account(username, password):
-            self.parent.show_page("CredentialsPage")  # Automatically log in after creation
+            self.parent.show_page(
+                "CredentialsPage")  # Automatically log in after creation
 
 
 class LoginPage(Page):
+
     def __init__(self, parent, user, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.user = user
@@ -247,12 +252,15 @@ class LoginPage(Page):
         self.password_entry_login = tk.Entry(self, show="*")
         self.password_entry_login.pack(pady=5)
 
-        self.login_button_final = tk.Button(self, text="Login", command=self.login)
+        self.login_button_final = tk.Button(self,
+                                            text="Login",
+                                            command=self.login)
         self.login_button_final.pack(pady=20)
 
         self.back_to_landing_button_login = tk.Button(
-            self, text="Back", command=lambda: self.parent.show_page("LandingPage")
-        )
+            self,
+            text="Back",
+            command=lambda: self.parent.show_page("LandingPage"))
         self.back_to_landing_button_login.pack(pady=10)
 
     def login(self):
@@ -270,13 +278,14 @@ class LoginPage(Page):
 
 
 class CredentialsPage(Page):
+
     def __init__(self, parent, credential, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.credential = credential
 
-        self.credentials_label = tk.Label(
-            self, text="Enter Your Gaming Credentials", font=("Arial", 16)
-        )
+        self.credentials_label = tk.Label(self,
+                                          text="Enter Your Gaming Credentials",
+                                          font=("Arial", 16))
         self.credentials_label.pack(pady=10)
 
         # Twitch
@@ -310,9 +319,9 @@ class CredentialsPage(Page):
         self.steam_entry.pack(pady=5)
 
         # Store Button
-        self.store_button = tk.Button(
-            self, text="Store Credentials", command=self.store_gaming_credentials
-        )
+        self.store_button = tk.Button(self,
+                                      text="Store Credentials",
+                                      command=self.store_gaming_credentials)
         self.store_button.pack(pady=20)
 
         # Navigation buttons to other pages
@@ -335,8 +344,9 @@ class CredentialsPage(Page):
 
         # Logout Button
         self.logout_button = tk.Button(
-            self.nav_frame, text="Logout", command=lambda: self.parent.show_page("LandingPage")
-        )
+            self.nav_frame,
+            text="Logout",
+            command=lambda: self.parent.show_page("LandingPage"))
         self.logout_button.pack(side="left", padx=5)
 
     def store_gaming_credentials(self):
@@ -344,17 +354,16 @@ class CredentialsPage(Page):
         twitch = self.twitch_entry.get()
         discord = self.discord_entry.get()
         steam = self.steam_entry.get()
-        self.credential.store_gaming_credentials(
-            self.parent.logged_in_user, twitch, discord, steam
-        )
+        self.credential.store_gaming_credentials(self.parent.logged_in_user,
+                                                 twitch, discord, steam)
 
 
 class SafeCommunicationPage(Page):
+
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.safe_communication_label = tk.Label(
-            self, text="Safe Communication Practices", font=("Arial", 16)
-        )
+            self, text="Safe Communication Practices", font=("Arial", 16))
         self.safe_communication_label.pack(pady=10)
 
         # Back button to credentials page
@@ -367,6 +376,7 @@ class SafeCommunicationPage(Page):
 
 
 class IncidentResponsePage(Page):
+
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.incident_response_label = tk.Label(
@@ -386,6 +396,7 @@ class IncidentResponsePage(Page):
 
 
 class App(tk.Tk):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Cyber Esports App")
@@ -416,11 +427,6 @@ class App(tk.Tk):
 
         self.pages[page_name].grid()
         self.pages[page_name].tkraise()
-
-
-if __name__ == "__main__":
-    app = App()
-    app.mainloop()
 
 # Database setup function
 def create_database():
