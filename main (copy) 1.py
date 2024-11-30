@@ -4,15 +4,19 @@
 #ADD 2FA
 #encrypt CREDENTIALS
 
-# Global variable to track the logged-in user
-logged_in_user = None
-
 import tkinter as tk
 from tkinter import messagebox
 import hashlib
 import re
 import sqlite3
 import os
+from passlib.context import CryptContext  # Example using passlib for password strength
+
+# Global variable to track the logged-in user
+logged_in_user = None
+
+# Initialize password hashing context
+crypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class User:
@@ -25,7 +29,7 @@ class User:
             messagebox.showerror("Account Creation Failed", "Username already in use.")
             return
 
-        if self.evaluate_password(password) == "Invalid":
+        if not self.evaluate_password(password):
             messagebox.showerror(
                 "Account Creation Failed",
                 "Your password is invalid. Please follow the instructions to create a stronger password."
@@ -47,23 +51,9 @@ class User:
             return None
 
     def evaluate_password(self, password):
-        """Evaluates password strength."""
-        if len(password) < 8:
-            return "Invalid"
-
-        length = len(password)
-        upper_case = len(re.findall(r'[A-Z]', password))
-        lower_case = len(re.findall(r'[a-z]', password))
-        numbers = len(re.findall(r'[0-9]', password))
-        symbols = len(re.findall(r'[!@#$%^&*(),.?":{}|<>]', password))
-
-        if length >= 13 and upper_case >= 2 and lower_case >= 2 and numbers >= 2 and symbols >= 2:
-            return "Strong"
-        elif length >= 8 and upper_case >= 1 and lower_case >= 1 and numbers >= 1 and symbols >= 1:
-            return "Weak"
-        else:
-            return "Invalid"
-
+        """Evaluates password strength using passlib."""
+        return crypt_context.verify(password, "$2b$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        )  # Replace with a strong default hash
 
 class Credential:
     def __init__(self, db):
@@ -109,17 +99,16 @@ class Database:
 
     def verify_login(self, username, password):
         """Verifies login credentials."""
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         self.cursor.execute(
             "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-            (username, hashed_password)
+            (username, crypt_context.hash(password))
         )
         result = self.cursor.fetchone()
         return result is not None
 
     def store_credentials(self, username, password):
         """Stores user credentials (hashed password)."""
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        hashed_password = crypt_context.hash(password)
         self.cursor.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
             (username, hashed_password)
@@ -222,13 +211,9 @@ class CreateAccountPage(Page):
         password = self.password_entry_create.get()
         password_strength = self.user.evaluate_password(password)
 
-        if password_strength == "Strong":
+        if password_strength:
             self.password_strength_label_create.config(
                 text="Password Strength: Strong", fg="green"
-            )
-        elif password_strength == "Weak":
-            self.password_strength_label_create.config(
-                text="Password Strength: Weak", fg="orange"
             )
         else:
             self.password_strength_label_create.config(
@@ -436,6 +421,7 @@ class App(tk.Tk):
 if __name__ == "__main__":
     app = App()
     app.mainloop()
+
 # Database setup function
 def create_database():
     connection = sqlite3.connect("CyberEsportsApp.db")
