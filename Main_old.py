@@ -293,6 +293,23 @@ class LoginPage(Page):
             command=lambda: self.parent.show_page("LandingPage"))
         self.back_to_landing_button_login.pack(pady=10)
 
+    def login(self):
+        username = self.username_entry_login.get()
+        password = self.password_entry_login.get()
+
+        # Hash the password to compare it with the stored hashed password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # Verify login credentials from the database
+        if self.user.db.verify_login(username, hashed_password):
+            # Generate and show 2FA code
+            two_factor_code = self.user.generate_two_factor_code()
+            print(f"Your 2FA code is: {two_factor_code}")
+            self.parent.logged_in_user = username
+            self.parent.show_page("TwoFactorPage")
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password.")
+
 
 class CredentialsPage(Page):
 
