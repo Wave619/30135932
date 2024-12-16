@@ -114,11 +114,6 @@ class Database:
         ''')
 
         self.connection.commit()
-        self.connection = sqlite3.connect(db_name)
-        self.cursor = self.connection.cursor()
-        self.key = Fernet.generate_key()
-        self.cipher = Fernet(self.key)
-        self.create_tables()
 
     def encrypt(self, data):
         return self.cipher.encrypt(data.encode()).decode()
