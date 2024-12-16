@@ -337,29 +337,39 @@ class LoginPage(Page):
         super().__init__(parent, *args, **kwargs)
         self.user = user
 
+        current_row = 0
+        
         self.login_label = tk.Label(self, text="Login", font=("Arial", 16))
-        self.login_label.pack(pady=10)
+        self.login_label.grid(row=current_row, column=0, pady=10)
+        current_row += 1
 
         self.username_label_login = tk.Label(self, text="Username:")
-        self.username_label_login.pack(pady=5)
+        self.username_label_login.grid(row=current_row, column=0, pady=5)
+        current_row += 1
+        
         self.username_entry_login = tk.Entry(self)
-        self.username_entry_login.pack(pady=5)
+        self.username_entry_login.grid(row=current_row, column=0, pady=5)
+        current_row += 1
 
         self.password_label_login = tk.Label(self, text="Password:")
-        self.password_label_login.pack(pady=5)
+        self.password_label_login.grid(row=current_row, column=0, pady=5)
+        current_row += 1
+        
         self.password_entry_login = tk.Entry(self, show="*")
-        self.password_entry_login.pack(pady=5)
+        self.password_entry_login.grid(row=current_row, column=0, pady=5)
+        current_row += 1
 
         self.login_button_final = tk.Button(self,
                                             text="Login",
                                             command=self.login)
-        self.login_button_final.pack(pady=20)
+        self.login_button_final.grid(row=current_row, column=0, pady=20)
+        current_row += 1
 
         self.back_to_landing_button_login = tk.Button(
             self,
             text="Back",
             command=lambda: self.parent.show_page("LandingPage"))
-        self.back_to_landing_button_login.pack(pady=10)
+        self.back_to_landing_button_login.grid(row=current_row, column=0, pady=10)
 
     def login(self):
         username = self.username_entry_login.get()
