@@ -120,6 +120,14 @@ class Database:
 
     def decrypt(self, data):
         return self.cipher.decrypt(data.encode()).decode()
+        
+    def verify_login(self, username, password):
+        """Verifies login credentials."""
+        self.cursor.execute(
+            "SELECT * FROM users WHERE username = ? AND password = ?",
+            (username, password))
+        result = self.cursor.fetchone()
+        return result is not None
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
         if twitch:
