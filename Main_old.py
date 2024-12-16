@@ -42,6 +42,20 @@ class User:
         self.two_factor_code = str(random.randint(1000, 9999))
         return self.two_factor_code
 
+    def evaluate_password(self, password):
+        """Evaluates password strength."""
+        if len(password) < 8:
+            return False
+        if not re.search(r'[A-Z]', password):
+            return False
+        if not re.search(r'[a-z]', password):
+            return False
+        if not re.search(r'[0-9]', password):
+            return False
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            return False
+        return True
+
     def login(self):
         username = self.username_entry_login.get()
         password = self.password_entry_login.get()
@@ -138,9 +152,22 @@ class Database:
             steam = self.encrypt(steam)
 
         self.cursor.execute(
-            '''INSERT INTO gaming_credentials (username, twitch, discord, steam) 
+            '''INSERT OR REPLACE INTO gaming_credentials (username, twitch, discord, steam) 
                            VALUES (?, ?, ?, ?)''',
             (username, twitch, discord, steam))
+        self.connection.commit()
+
+    def is_duplicate(self, username):
+        """Checks if username already exists."""
+        self.cursor.execute("SELECT username FROM users WHERE username = ?", (username,))
+        return self.cursor.fetchone() is not None
+
+    def store_credentials(self, username, password):
+        """Stores user credentials."""
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        self.cursor.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, hashed_password))
         self.connection.commit()
 
 
@@ -443,6 +470,7 @@ class App(tk.Tk):
         super().__init__(*args, **kwargs)
         self.title("Cyber Esports App")
         self.geometry("400x600")
+        self.logged_in_user = None
 
         # Initialise database
         self.db = Database()
