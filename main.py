@@ -227,15 +227,19 @@ class TwoFactorPage(Page):
     def __init__(self, parent, user, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.user = user
+        
+        current_row = 0
 
         self.label = tk.Label(self, text="Enter 2FA Code", font=("Arial", 16))
-        self.label.pack(pady=10)
+        self.label.grid(row=current_row, column=0, pady=10)
+        current_row += 1
 
         self.code_entry = tk.Entry(self)
-        self.code_entry.pack(pady=10)
+        self.code_entry.grid(row=current_row, column=0, pady=10)
+        current_row += 1
 
         self.submit_button = tk.Button(self, text="Verify Code", command=self.verify_code)
-        self.submit_button.pack(pady=10)
+        self.submit_button.grid(row=current_row, column=0, pady=10)
 
     def verify_code(self):
         entered_code = self.code_entry.get()
