@@ -112,7 +112,7 @@ class Database:
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY,
-                password TEXT NOT NULL
+                password_hash TEXT NOT NULL
             )
         ''')
 
@@ -138,7 +138,7 @@ class Database:
     def verify_login(self, username, password):
         """Verifies login credentials."""
         self.cursor.execute(
-            "SELECT * FROM users WHERE username = ? AND password = ?",
+            "SELECT * FROM users WHERE username = ? AND password_hash = ?",
             (username, password))
         result = self.cursor.fetchone()
         return result is not None
