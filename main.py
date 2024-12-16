@@ -269,10 +269,11 @@ class LoginPage(Page):
         logged_in_user = self.user.login(username, password)
         if logged_in_user:
             if logged_in_user == "admin":
-                # You can redirect to an admin page here
                 self.parent.show_page("CredentialsPage")
             else:
-                self.parent.show_page("CredentialsPage")
+                code = self.user.generate_two_factor_code()
+                messagebox.showinfo("2FA Code", f"Your 2FA code is: {code}")
+                self.parent.show_page("TwoFactorPage")
 
 
 class CredentialsPage(Page):
