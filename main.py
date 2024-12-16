@@ -254,8 +254,11 @@ class CreateAccountPage(Page):
         password = self.password_entry_create.get()
 
         if self.user.create_account(username, password):
-            self.parent.show_page(
-                "LoginPage")  # Automatically log in after creation
+            # Generate and show 2FA code after successful account creation
+            two_factor_code = self.user.generate_two_factor_code()
+            messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
+            self.parent.logged_in_user = username
+            self.parent.show_page("TwoFactorPage")
 
 
 class LoginPage(Page):
