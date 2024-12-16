@@ -10,10 +10,6 @@ import hashlib
 import re
 import sqlite3
 import os
-from passlib.context import CryptContext 
-
-# password hashing context
-crypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class User:
@@ -49,12 +45,6 @@ class User:
             messagebox.showerror("Login Failed",
                                  "Invalid username or password")
             return None
-
-    def evaluate_password(self, password):
-        """Evaluates password strength using passlib."""
-        return crypt_context.verify(password,
-                                    "$2b$12$XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                                    )  # Replace with a strong default hash
 
 
 class Credential:
@@ -107,25 +97,33 @@ class Database:
         """Verifies login credentials."""
         self.cursor.execute(
             "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-            (username, crypt_context.hash(password)))
+            (username, hashed_password))  # Use the hashed password for comparison
         result = self.cursor.fetchone()
         return result is not None
 
     def store_credentials(self, username, password):
         """Stores user credentials (hashed password)."""
-        hashed_password = crypt_context.hash(password)
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         self.cursor.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
             (username, hashed_password))
         self.connection.commit()
-
     def store_gaming_credentials(self, username, twitch, discord, steam):
         """Stores gaming credentials in the database."""
+        if twitch:
+            twitch = hashlib.sha256(twitch.encode()).hexdigest()
+        if discord:
+            discord = hashlib.sha256(discord.encode()).hexdigest()
+        if steam:
+            steam = hashlib.sha256(steam.encode()).hexdigest()
+
         self.cursor.execute(
             '''INSERT INTO gaming_credentials (username, twitch, discord, steam) 
-                              VALUES (?, ?, ?, ?)''',
+                          VALUES (?, ?, ?, ?)''',
             (username, twitch, discord, steam))
         self.connection.commit()
+
+
 
     def close(self):
         """Closes the database connection."""
@@ -415,6 +413,7 @@ class App(tk.Tk):
             "CredentialsPage": CredentialsPage(self, self.credential),
             "SafeCommunicationPage": SafeCommunicationPage(self),
             "IncidentResponsePage": IncidentResponsePage(self),
+            "TwoFactorPage": TwoFactorPage(self, self.user),
         }
 
         # Show the first page
@@ -427,6 +426,7 @@ class App(tk.Tk):
 
         self.pages[page_name].grid()
         self.pages[page_name].tkraise()
+
 
 # Database setup function
 def create_database():
@@ -461,7 +461,7 @@ def evaluate_password(password):
     numbers = len(re.findall(r'[0-9]', password))
     symbols = len(re.findall(r'[!@#$%^&*(),.?":{}|<>]', password))
 
-    if length >= 13 and upper_case >= 2 and lower_case >= 2 and numbers >= 2 and symbols >= 2:
+    if length >= 13 and upper_case >= 1 and lower_case >= 1 and numbers >= 1 and symbols >= 1:
         return "Strong"
     elif length >= 8 and upper_case >= 1 and lower_case >= 1 and numbers >= 1 and symbols >= 1:
         return "Weak"
@@ -491,6 +491,31 @@ def verify_login(username, password):
     result = cursor.fetchone()
     connection.close()
     return result is not None
+
+class TwoFactorPage(Page):
+    def __init__(self, parent, user, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.user = user
+
+        self.two_factor_label = tk.Label(self, text="Two-Factor Authentication", font=("Arial", 16))
+        self.two_factor_label.pack(pady=10)
+
+        self.instruction_label = tk.Label(self, text="Enter the 4-digit code sent to you:")
+        self.instruction_label.pack(pady=5)
+
+        self.code_entry = tk.Entry(self)
+        self.code_entry.pack(pady=5)
+
+        self.verify_button = tk.Button(self, text="Verify", command=self.verify_code)
+        self.verify_button.pack(pady=20)
+
+    def verify_code(self):
+        entered_code = self.code_entry.get()
+        if entered_code == self.user.two_factor_code:
+            self.parent.show_page("CredentialsPage")
+        else:
+            messagebox.showerror("Verification Failed", "Invalid code. Please try again.")
+
 
 
 # Function to securely store user credentials (hashed password) in SQLite
