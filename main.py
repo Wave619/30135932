@@ -36,15 +36,36 @@ class User:
 
     def login(self, username, password):
         """Logs in an existing user."""
-        if username == "admin" and password == "admin":
-            return "admin"
+        hashed_password = hashlib.sha256(password.encode()).hexdigest() #added this line
 
-        if self.db.verify_login(username, password):
+        if self.db.verify_login(username, hashed_password): #changed this line
             self.two_factor_code = self.generate_two_factor_code()
             return username
         else:
             messagebox.showerror("Login Failed", "Invalid username or password")
             return None
+
+    def generate_two_factor_code(self):
+        """Generates a random 4-digit 2FA code."""
+        import random
+        return str(random.randint(1000, 9999))
+
+    def evaluate_password(self, password):
+        if len(password) < 8:
+            return False
+
+        length = len(password)
+        upper_case = len(re.findall(r'[A-Z]', password))
+        lower_case = len(re.findall(r'[a-z]', password))
+        numbers = len(re.findall(r'[0-9]', password))
+        symbols = len(re.findall(r'[!@#$%^&*(),.?":{}|<>]', password))
+
+        if length >= 13 and upper_case >= 1 and lower_case >= 1 and numbers >= 1 and symbols >= 1:
+            return True
+        elif length >= 8 and upper_case >= 1 and lower_case >= 1 and numbers >= 1 and symbols >= 1:
+            return True
+        else:
+            return False
 
 
 class Credential:
@@ -97,7 +118,7 @@ class Database:
         """Verifies login credentials."""
         self.cursor.execute(
             "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-            (username, hashed_password))  # Use the hashed password for comparison
+            (username, password))  # Use the hashed password for comparison
         result = self.cursor.fetchone()
         return result is not None
 
@@ -228,7 +249,7 @@ class CreateAccountPage(Page):
 
         if self.user.create_account(username, password):
             self.parent.show_page(
-                "CredentialsPage")  # Automatically log in after creation
+                "LoginPage")  # Automatically log in after creation
 
 
 class LoginPage(Page):
@@ -271,8 +292,9 @@ class LoginPage(Page):
             if logged_in_user == "admin":
                 self.parent.show_page("CredentialsPage")
             else:
-                code = self.user.generate_two_factor_code()
+                code = self.user.two_factor_code
                 messagebox.showinfo("2FA Code", f"Your 2FA code is: {code}")
+                self.parent.logged_in_user = logged_in_user #added this line
                 self.parent.show_page("TwoFactorPage")
 
 
@@ -454,7 +476,7 @@ create_database()
 # Function to evaluate password strength
 def evaluate_password(password):
     if len(password) < 8:
-        return "Invalid"
+        return False
 
     length = len(password)
     upper_case = len(re.findall(r'[A-Z]', password))
@@ -463,11 +485,11 @@ def evaluate_password(password):
     symbols = len(re.findall(r'[!@#$%^&*(),.?":{}|<>]', password))
 
     if length >= 13 and upper_case >= 1 and lower_case >= 1 and numbers >= 1 and symbols >= 1:
-        return "Strong"
+        return True
     elif length >= 8 and upper_case >= 1 and lower_case >= 1 and numbers >= 1 and symbols >= 1:
-        return "Weak"
+        return True
     else:
-        return "Invalid"
+        return False
 
 
 # Function to check for duplicate username
@@ -544,7 +566,7 @@ def create_account():
 
     # Check if password strength is valid
     password_strength = evaluate_password(password)
-    if password_strength == "Invalid":
+    if not password_strength: #changed this line
         messagebox.showerror(
             "Account Creation Failed",
             "Your password is invalid. Please follow the instructions to create a stronger password."
@@ -562,12 +584,7 @@ def login():
     username = username_entry_login.get()
     password = password_entry_login.get()
 
-    # Check for admin bypass
-    if username == "admin" and password == "admin":
-        logged_in_user = username
-        # You can redirect to an admin page here
-        show_credentials_page()  # Create this function to show the admin page
-        return
+    # Check for admin bypass (removed)
 
     if verify_login(username, password):
         logged_in_user = username
@@ -610,12 +627,9 @@ def update_password_strength_create(event=None):
     password = password_entry_create.get()
     password_strength = evaluate_password(password)
 
-    if password_strength == "Strong":
+    if password_strength:
         password_strength_label_create.config(text="Password Strength: Strong",
                                               fg="green")
-    elif password_strength == "Weak":
-        password_strength_label_create.config(text="Password Strength: Weak",
-                                              fg="orange")
     else:
         password_strength_label_create.config(
             text="Password Strength: Invalid", fg="red")
