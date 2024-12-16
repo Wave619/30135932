@@ -195,10 +195,11 @@ class Page(tk.Frame):
         
         # Create main container frame
         self.container = tk.Frame(self)
-        self.container.grid(row=0, column=0)
+        self.container.grid(row=0, column=0, sticky="nsew")
         
-        # Override pack to use container
-        self.pack = self.container.pack
+        # Configure container grid
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
 
 
 class LandingPage(Page):
@@ -208,19 +209,19 @@ class LandingPage(Page):
         self.landing_label = tk.Label(self,
                                       text="Welcome to Cyber Esports App",
                                       font=("Arial", 16))
-        self.landing_label.pack(pady=20)
+        self.landing_label.grid(row=0, column=0, pady=20)
 
         self.create_account_button = tk.Button(
             self,
             text="Create Account",
             command=lambda: self.parent.show_page("CreateAccountPage"))
-        self.create_account_button.pack(pady=10)
+        self.create_account_button.grid(row=1, column=0, pady=10)
 
         self.login_button_landing = tk.Button(
             self,
             text="Login",
             command=lambda: self.parent.show_page("LoginPage"))
-        self.login_button_landing.pack(pady=10)
+        self.login_button_landing.grid(row=2, column=0, pady=10)
 
 class TwoFactorPage(Page):
     def __init__(self, parent, user, *args, **kwargs):
