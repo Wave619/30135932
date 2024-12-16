@@ -134,7 +134,7 @@ class Database:
 
     def decrypt(self, data):
         return self.cipher.decrypt(data.encode()).decode()
-        
+
     def verify_login(self, username, password):
         """Verifies login credentials."""
         self.cursor.execute(
@@ -348,7 +348,7 @@ class LoginPage(Page):
         if self.user.db.verify_login(username, hashed_password):
             # Generate and show 2FA code
             two_factor_code = self.user.generate_two_factor_code()
-            print(f"Your 2FA code is: {two_factor_code}")
+            messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
             self.parent.logged_in_user = username
             self.parent.show_page("TwoFactorPage")
         else:
