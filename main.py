@@ -188,6 +188,17 @@ class Page(tk.Frame):
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
         self.grid(row=0, column=0, sticky="nsew")
+        
+        # Configure grid weights to center content
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        
+        # Create main container frame
+        self.container = tk.Frame(self)
+        self.container.grid(row=0, column=0)
+        
+        # Override pack to use container
+        self.pack = self.container.pack
 
 
 class LandingPage(Page):
@@ -479,6 +490,8 @@ class App(tk.Tk):
         super().__init__(*args, **kwargs)
         self.title("Cyber Esports App")
         self.geometry("400x600")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
         self.logged_in_user = None
 
         # Initialise database
