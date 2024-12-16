@@ -40,10 +40,10 @@ class User:
             return "admin"
 
         if self.db.verify_login(username, password):
+            self.two_factor_code = self.generate_two_factor_code()
             return username
         else:
-            messagebox.showerror("Login Failed",
-                                 "Invalid username or password")
+            messagebox.showerror("Login Failed", "Invalid username or password")
             return None
 
 
