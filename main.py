@@ -254,20 +254,29 @@ class CreateAccountPage(Page):
         super().__init__(parent, *args, **kwargs)
         self.user = user
 
+        current_row = 0
+        
         self.create_account_label = tk.Label(self,
                                              text="Create Account",
                                              font=("Arial", 16))
-        self.create_account_label.pack(pady=10)
+        self.create_account_label.grid(row=current_row, column=0, pady=10)
+        current_row += 1
 
         self.username_label_create = tk.Label(self, text="Username:")
-        self.username_label_create.pack(pady=5)
+        self.username_label_create.grid(row=current_row, column=0, pady=5)
+        current_row += 1
+        
         self.username_entry_create = tk.Entry(self)
-        self.username_entry_create.pack(pady=5)
+        self.username_entry_create.grid(row=current_row, column=0, pady=5)
+        current_row += 1
 
         self.password_label_create = tk.Label(self, text="Password:")
-        self.password_label_create.pack(pady=5)
+        self.password_label_create.grid(row=current_row, column=0, pady=5)
+        current_row += 1
+        
         self.password_entry_create = tk.Entry(self, show="*")
-        self.password_entry_create.pack(pady=5)
+        self.password_entry_create.grid(row=current_row, column=0, pady=5)
+        current_row += 1
 
         # Password strength instructions
         self.password_instructions = tk.Label(
@@ -277,11 +286,13 @@ class CreateAccountPage(Page):
                   "2. At least 1 uppercase and 1 lowercase letter\n"
                   "3. At least 1 number and 1 symbol"),
         )
-        self.password_instructions.pack(pady=5)
+        self.password_instructions.grid(row=current_row, column=0, pady=5)
+        current_row += 1
 
         # Password Strength Label
         self.password_strength_label_create = tk.Label(self, text="")
-        self.password_strength_label_create.pack(pady=5)
+        self.password_strength_label_create.grid(row=current_row, column=0, pady=5)
+        current_row += 1
 
         # Bind password entry to strength evaluation
         self.password_entry_create.bind("<KeyRelease>",
@@ -289,13 +300,14 @@ class CreateAccountPage(Page):
 
         self.create_account_button_final = tk.Button(
             self, text="Create Account", command=self.create_account)
-        self.create_account_button_final.pack(pady=20)
+        self.create_account_button_final.grid(row=current_row, column=0, pady=20)
+        current_row += 1
 
         self.back_to_landing_button = tk.Button(
             self,
             text="Back",
             command=lambda: self.parent.show_page("LandingPage"))
-        self.back_to_landing_button.pack(pady=10)
+        self.back_to_landing_button.grid(row=current_row, column=0, pady=10)
 
     def update_password_strength_create(self, event=None):
         """Updates password strength feedback during account creation."""
