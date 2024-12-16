@@ -395,71 +395,84 @@ class CredentialsPage(Page):
         super().__init__(parent, *args, **kwargs)
         self.credential = credential
 
+        current_row = 0
+        
         self.credentials_label = tk.Label(self,
                                           text="Enter Your Gaming Credentials",
                                           font=("Arial", 16))
-        self.credentials_label.pack(pady=10)
+        self.credentials_label.grid(row=current_row, column=0, columnspan=2, pady=10)
+        current_row += 1
 
         # Twitch
         self.twitch_label = tk.Label(self, text="Twitch Username:")
-        self.twitch_label.pack(pady=5)
+        self.twitch_label.grid(row=current_row, column=0, pady=5)
         self.twitch_entry = tk.Entry(self)
-        self.twitch_entry.pack(pady=5)
-        self.twitch_label = tk.Label(self, text="Twitch Password:")
-        self.twitch_label.pack(pady=5)
-        self.twitch_entry = tk.Entry(self, show="*")
-        self.twitch_entry.pack(pady=5)
+        self.twitch_entry.grid(row=current_row, column=1, pady=5)
+        current_row += 1
+        
+        self.twitch_pass_label = tk.Label(self, text="Twitch Password:")
+        self.twitch_pass_label.grid(row=current_row, column=0, pady=5)
+        self.twitch_pass_entry = tk.Entry(self, show="*")
+        self.twitch_pass_entry.grid(row=current_row, column=1, pady=5)
+        current_row += 1
 
         # Discord
         self.discord_label = tk.Label(self, text="Discord Username:")
-        self.discord_label.pack(pady=5)
+        self.discord_label.grid(row=current_row, column=0, pady=5)
         self.discord_entry = tk.Entry(self)
-        self.discord_entry.pack(pady=5)
-        self.discord_label = tk.Label(self, text="Discord Password:")
-        self.discord_label.pack(pady=5)
-        self.discord_entry = tk.Entry(self, show="*")
-        self.discord_entry.pack(pady=5)
+        self.discord_entry.grid(row=current_row, column=1, pady=5)
+        current_row += 1
+        
+        self.discord_pass_label = tk.Label(self, text="Discord Password:")
+        self.discord_pass_label.grid(row=current_row, column=0, pady=5)
+        self.discord_pass_entry = tk.Entry(self, show="*")
+        self.discord_pass_entry.grid(row=current_row, column=1, pady=5)
+        current_row += 1
 
         # Steam
         self.steam_label = tk.Label(self, text="Steam Username:")
-        self.steam_label.pack(pady=5)
+        self.steam_label.grid(row=current_row, column=0, pady=5)
         self.steam_entry = tk.Entry(self)
-        self.steam_entry.pack(pady=5)
-        self.steam_label = tk.Label(self, text="Steam Password:")
-        self.steam_label.pack(pady=5)
-        self.steam_entry = tk.Entry(self, show="*")
-        self.steam_entry.pack(pady=5)
+        self.steam_entry.grid(row=current_row, column=1, pady=5)
+        current_row += 1
+        
+        self.steam_pass_label = tk.Label(self, text="Steam Password:")
+        self.steam_pass_label.grid(row=current_row, column=0, pady=5)
+        self.steam_pass_entry = tk.Entry(self, show="*")
+        self.steam_pass_entry.grid(row=current_row, column=1, pady=5)
+        current_row += 1
 
         # Store Button
         self.store_button = tk.Button(self,
                                       text="Store Credentials",
                                       command=self.store_gaming_credentials)
-        self.store_button.pack(pady=20)
+        self.store_button.grid(row=current_row, column=0, columnspan=2, pady=20)
+        current_row += 1
 
-        # Navigation buttons to other pages
+        # Navigation buttons frame
         self.nav_frame = tk.Frame(self)
-        self.nav_frame.pack(pady=10)
+        self.nav_frame.grid(row=current_row, column=0, columnspan=2, pady=10)
 
         self.safe_communication_button = tk.Button(
             self.nav_frame,
             text="Safe Communication Practices",
             command=lambda: self.parent.show_page("SafeCommunicationPage"),
         )
-        self.safe_communication_button.pack(side="left", padx=5)
+        self.safe_communication_button.grid(row=0, column=0, padx=5)
 
         self.incident_response_button = tk.Button(
             self.nav_frame,
             text="Incident Response",
             command=lambda: self.parent.show_page("IncidentResponsePage"),
         )
-        self.incident_response_button.pack(side="left", padx=5)
+        self.incident_response_button.grid(row=0, column=1, padx=5)
 
         # Logout Button
         self.logout_button = tk.Button(
             self.nav_frame,
             text="Logout",
             command=lambda: self.parent.show_page("LandingPage"))
-        self.logout_button.pack(side="left", padx=5)
+        self.logout_button.grid(row=0, column=2, padx=5)
 
     def store_gaming_credentials(self):
         """Handles storing gaming credentials."""
