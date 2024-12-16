@@ -16,6 +16,7 @@ class User:
 
     def __init__(self, db):
         self.db = db
+        self.two_factor_code = None
 
     def create_account(self, username, password):
         """Creates a new user account."""
@@ -72,6 +73,7 @@ class Credential:
 
     def __init__(self, db):
         self.db = db
+        self.two_factor_code = None
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
         """Stores gaming credentials for the user."""
@@ -289,12 +291,12 @@ class LoginPage(Page):
 
         logged_in_user = self.user.login(username, password)
         if logged_in_user:
-            if logged_in_user == "admin":
+            if username == "admin" and password == "admin":
                 self.parent.show_page("CredentialsPage")
             else:
                 code = self.user.two_factor_code
                 messagebox.showinfo("2FA Code", f"Your 2FA code is: {code}")
-                self.parent.logged_in_user = logged_in_user #added this line
+                self.parent.logged_in_user = logged_in_user
                 self.parent.show_page("TwoFactorPage")
 
 
