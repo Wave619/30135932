@@ -144,29 +144,38 @@ class Database:
         return result is not None
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
-        if twitch:
-            twitch = self.encrypt(twitch)
-        if discord:
-            discord = self.encrypt(discord)
-        if steam:
-            steam = self.encrypt(steam)
+        try:
+            if twitch:
+                twitch = self.encrypt(twitch)
+            if discord:
+                discord = self.encrypt(discord)
+            if steam:
+                steam = self.encrypt(steam)
 
-        self.cursor.execute(
-            '''INSERT OR REPLACE INTO gaming_credentials (username, twitch, discord, steam) 
-                           VALUES (?, ?, ?, ?)''',
-            (username, twitch, discord, steam))
-        self.connection.commit()
+            self.cursor.execute(
+                '''INSERT OR REPLACE INTO gaming_credentials (username, twitch, discord, steam) 
+                               VALUES (?, ?, ?, ?)''',
+                (username, twitch, discord, steam))
+            self.connection.commit()
+        except sqlite3.Error as e:
+            messagebox.showerror("Database Error", f"Failed to store credentials: {str(e)}")
+            raise
 
     def is_duplicate(self, username):
         """Checks if username already exists."""
         self.cursor.execute("SELECT username FROM users WHERE username = ?", (username,))
         return self.cursor.fetchone() is not None
 
+    def close(self):
+        """Close the database connection."""
+        if self.connection:
+            self.connection.close()
+
     def store_credentials(self, username, password):
         """Stores user credentials."""
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         self.cursor.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
+            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
             (username, hashed_password))
         self.connection.commit()
 
