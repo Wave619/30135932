@@ -508,12 +508,16 @@ class IncidentResponsePage(Page):
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
+        
+        current_row = 0
+        
         self.incident_response_label = tk.Label(
             self,
             text="Incident Response and Recovery Plans",
             font=("Arial", 16),
         )
-        self.incident_response_label.pack(pady=10)
+        self.incident_response_label.grid(row=current_row, column=0, pady=10)
+        current_row += 1
 
         # Back button to credentials page
         self.back_to_credentials_button_incident = tk.Button(
@@ -521,7 +525,7 @@ class IncidentResponsePage(Page):
             text="Back to Credentials",
             command=lambda: self.parent.show_page("CredentialsPage"),
         )
-        self.back_to_credentials_button_incident.pack(pady=10)
+        self.back_to_credentials_button_incident.grid(row=current_row, column=0, pady=10)
 
 
 class App(tk.Tk):
