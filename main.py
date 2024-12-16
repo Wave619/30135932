@@ -298,10 +298,9 @@ class LoginPage(Page):
             if username == "admin" and password == "admin":
                 self.parent.show_page("CredentialsPage")
             else:
-                code = self.user.two_factor_code
-                messagebox.showinfo("2FA Code", f"Your 2FA code is: {code}")
                 self.parent.logged_in_user = logged_in_user
                 self.parent.show_page("TwoFactorPage")
+
 
 
 class CredentialsPage(Page):
