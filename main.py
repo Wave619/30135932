@@ -93,24 +93,17 @@ class User:
             return False
         return True
 
-    def login(self):
-        """Handles user login process with 2FA"""
-        username = self.username_entry_login.get()
-        password = self.password_entry_login.get()
-
-        # Hash password for comparison
+    def verify_credentials(self, username, password):
+        """
+        Verifies user credentials
+        Args:
+            username: User's username
+            password: User's password
+        Returns:
+            bool: True if credentials are valid
+        """
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
-        # Verify credentials
-        if self.db.verify_login(username, hashed_password):
-            # Generate and store 2FA code
-            two_factor_code = self.generate_two_factor_code()
-            print(f"Your 2FA code is: {two_factor_code}") 
-
-            self.user.two_factor_code = two_factor_code
-            self.parent.show_page("TwoFactorPage")
-        else:
-            messagebox.showerror("Login Failed", "Invalid username or password.")
+        return self.db.verify_login(username, hashed_password)
 
     def alert_compromised_passwords(self):
         """Checks stored passwords against compromised list and alerts users"""
@@ -482,9 +475,13 @@ class LoginPage(Page):
         """Handles login process with security checks"""
         username = self.username_entry_login.get()
         password = self.password_entry_login.get()
+        
+        if not username or not password:
+            messagebox.showerror("Login Failed", "Please enter both username and password.")
+            return
 
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
+        
         # Check for compromised password
         if hashed_password in self.user.db.compromised_passwords:
             messagebox.showerror(
@@ -493,7 +490,7 @@ class LoginPage(Page):
             )
             return
 
-        if self.user.db.verify_login(username, hashed_password):
+        if self.user.verify_credentials(username, password):
             self.user.db.check_compromised_passwords()
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
