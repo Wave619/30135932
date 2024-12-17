@@ -90,6 +90,31 @@ class User:
             self.parent.show_page("TwoFactorPage")
         else:
             messagebox.showerror("Login Failed", "Invalid username or password.")
+
+    def alert_compromised_passwords(self):
+        """Checks all stored passwords against the compromised password list and alerts users."""
+        # Query all stored passwords from the database
+        self.cursor.execute("SELECT username, password_hash FROM users")
+        users = self.cursor.fetchall()
+
+        # Compare each stored password hash with the compromised list
+        for encrypted_username, hashed_password in users:
+            if hashed_password in self.compromised_passwords:
+                decrypted_username = self.db.decrypt(encrypted_username)
+                messagebox.showwarning(
+                    "Compromised Password Alert",
+                    f"The password for user '{decrypted_username}' is in the compromised list. "
+                    "Please change your password immediately."
+                )
+
+    def update_compromised_passwords(self, file_path='Comptimised_Passwords.json'):
+        """Updates the compromised password list and re-checks the database."""
+        # Reload and hash the compromised passwords
+        self.compromised_passwords = self.db.load_hashed_compromised_passwords(file_path)
+
+        # Alert users with compromised passwords
+        self.alert_compromised_passwords()
+
 class Credential:
 
     def __init__(self, db):
@@ -228,9 +253,8 @@ class Database:
         """Load and hash all compromised passwords."""
         with open(file_path, 'r') as f:
             compromised_passwords = json.load(f)
+        return {hashlib.sha256(password.encode()).hexdigest() for password in compromised_passwords}
 
-        hashed_passwords = {hashlib.sha256(pw.encode()).hexdigest() for pw in compromised_passwords}
-        return hashed_passwords
 
 
 class Page(tk.Frame):
@@ -567,5 +591,6 @@ class App(tk.Tk):
 
 if __name__ == "__main__":
     app = App()
+    app.db.check_compromised_passwords()  # Initial check for compromised passwords
     app.show_page("LandingPage")  # Show the initial landing page
     app.mainloop()  # Start the main event loop
