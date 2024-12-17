@@ -137,9 +137,10 @@ class Database:
 
     def verify_login(self, username, password):
         """Verifies login credentials."""
+        encrypted_username = self.encrypt(username)
         self.cursor.execute(
             "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-            (username, password))
+            (encrypted_username, password))
         result = self.cursor.fetchone()
         return result is not None
 
@@ -163,7 +164,8 @@ class Database:
 
     def is_duplicate(self, username):
         """Checks if username already exists."""
-        self.cursor.execute("SELECT username FROM users WHERE username = ?", (username,))
+        encrypted_username = self.encrypt(username)
+        self.cursor.execute("SELECT username FROM users WHERE username = ?", (encrypted_username,))
         return self.cursor.fetchone() is not None
 
     def close(self):
@@ -173,10 +175,11 @@ class Database:
 
     def store_credentials(self, username, password):
         """Stores user credentials."""
+        encrypted_username = self.encrypt(username)
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         self.cursor.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-            (username, hashed_password))
+            (encrypted_username, hashed_password))
         self.connection.commit()
 
 
