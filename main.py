@@ -9,6 +9,7 @@ import re
 import sqlite3
 import os
 import random
+import json
 from cryptography.fernet import Fernet
 
 
@@ -20,11 +21,25 @@ class User:
 
     def create_account(self, username, password):
         """Creates a new user account."""
+        # Check for duplicate username
         if self.db.is_duplicate(username):
             messagebox.showerror("Account Creation Failed",
                                  "Username already in use.")
             return
 
+
+        # Hash the entered password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # Check if the hashed password is in the compromised list
+        if hashed_password in self.db.compromised_passwords:
+            messagebox.showerror(
+                "Account Creation Failed",
+                "The password you entered is compromised. Please choose a different, stronger password."
+            )
+            return
+            
+         #Check if the password meets strength requirements
         if not self.evaluate_password(password):
             messagebox.showerror(
                 "Account Creation Failed",
@@ -32,6 +47,7 @@ class User:
             )
             return
 
+        # Store credentials in the database
         self.db.store_credentials(username, password)
         return True
 
@@ -74,10 +90,6 @@ class User:
             self.parent.show_page("TwoFactorPage")
         else:
             messagebox.showerror("Login Failed", "Invalid username or password.")
-
-
-
-
 class Credential:
 
     def __init__(self, db):
@@ -91,11 +103,23 @@ class Credential:
                 "Please fill in at least one field for gaming credentials.")
             return
 
+        hashed_credentials = {
+            'twitch': hashlib.sha256(twitch.encode()).hexdigest() if twitch else None,
+            'discord': hashlib.sha256(discord.encode()).hexdigest() if discord else None,
+            'steam': hashlib.sha256(steam.encode()).hexdigest() if steam else None,
+        }
+
+        for service, hashed_password in hashed_credentials.items():
+            if hashed_password and hashed_password in self.db.compromised_passwords:
+                messagebox.showerror(
+                    "Compromised Password",
+                    f"The password for {service} is compromised. Please choose a different, stronger password."
+                )
+                return
+                
         self.db.store_gaming_credentials(username, twitch, discord, steam)
         messagebox.showinfo("Success",
                             "Gaming credentials stored successfully!")
-
-
 class Database:
     def __init__(self, db_name="CyberEsportsApp.db"):
         self.connection = sqlite3.connect(db_name)
@@ -103,6 +127,7 @@ class Database:
         self.key = Fernet.generate_key()
         self.cipher = Fernet(self.key)
         self.create_tables()
+        self.compromised_passwords = self.load_hashed_compromised_passwords()
 
     def create_tables(self):
         """Creates the necessary database tables if they don't exist."""
@@ -180,7 +205,32 @@ class Database:
             (encrypted_username, hashed_password))
         self.connection.commit()
 
+    def check_compromised_passwords(self):
+        """Checks if any stored passwords are compromised."""
+        # Load compromised passwords from the JSON file
+        with open('Compromised_Passwords.json', 'r') as f:
+            compromised_passwords = json.load(f)
 
+        # Query all stored passwords from the database
+        self.cursor.execute("SELECT username, password_hash FROM users")
+        users = self.cursor.fetchall()
+
+        for username, password_hash in users:
+            # Check if the hashed password is in the compromised list
+            if password_hash in compromised_passwords:
+                messagebox.showwarning(
+                    "Compromised Password",
+                    f"The password for username '{self.decrypt(username)}' has been compromised. "
+                    "Please change your password immediately."
+                )
+
+    def load_hashed_compromised_passwords(self, file_path='Compromised_Passwords.json'):
+        """Load and hash all compromised passwords."""
+        with open(file_path, 'r') as f:
+            compromised_passwords = json.load(f)
+
+        hashed_passwords = {hashlib.sha256(pw.encode()).hexdigest() for pw in compromised_passwords}
+        return hashed_passwords
 
 
 class Page(tk.Frame):
@@ -345,8 +395,17 @@ class LoginPage(Page):
         # Hash the password to compare it with the stored hashed password
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
+        if hashed_password in self.user.db.compromised_passwords:
+            messagebox.showerror(
+                "Login Failed",
+                "The password you entered is compromised. Please reset your password immediately."
+            )
+            return
+
         # Verify login credentials from the database
         if self.user.db.verify_login(username, hashed_password):
+            # Check for compromised passwords
+            self.user.db.check_compromised_passwords()
             # Generate and show 2FA code
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
