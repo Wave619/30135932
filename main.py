@@ -188,18 +188,6 @@ class Page(tk.Frame):
         super().__init__(parent, *args, **kwargs)
         self.parent = parent
         self.grid(row=0, column=0, sticky="nsew")
-        
-        # Configure grid weights to center content
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        
-        # Create main container frame
-        self.container = tk.Frame(self)
-        self.container.grid(row=0, column=0, sticky="nsew")
-        
-        # Configure container grid
-        self.container.grid_rowconfigure(0, weight=1)
-        self.container.grid_columnconfigure(0, weight=1)
 
 
 class LandingPage(Page):
@@ -209,37 +197,33 @@ class LandingPage(Page):
         self.landing_label = tk.Label(self,
                                       text="Welcome to Cyber Esports App",
                                       font=("Arial", 16))
-        self.landing_label.grid(row=0, column=0, pady=20)
+        self.landing_label.pack(pady=20)
 
         self.create_account_button = tk.Button(
             self,
             text="Create Account",
             command=lambda: self.parent.show_page("CreateAccountPage"))
-        self.create_account_button.grid(row=1, column=0, pady=10)
+        self.create_account_button.pack(pady=10)
 
         self.login_button_landing = tk.Button(
             self,
             text="Login",
             command=lambda: self.parent.show_page("LoginPage"))
-        self.login_button_landing.grid(row=2, column=0, pady=10)
+        self.login_button_landing.pack(pady=10)
 
 class TwoFactorPage(Page):
     def __init__(self, parent, user, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.user = user
-        
-        current_row = 0
 
         self.label = tk.Label(self, text="Enter 2FA Code", font=("Arial", 16))
-        self.label.grid(row=current_row, column=0, pady=10)
-        current_row += 1
+        self.label.pack(pady=10)
 
         self.code_entry = tk.Entry(self)
-        self.code_entry.grid(row=current_row, column=0, pady=10)
-        current_row += 1
+        self.code_entry.pack(pady=10)
 
         self.submit_button = tk.Button(self, text="Verify Code", command=self.verify_code)
-        self.submit_button.grid(row=current_row, column=0, pady=10)
+        self.submit_button.pack(pady=10)
 
     def verify_code(self):
         entered_code = self.code_entry.get()
@@ -258,29 +242,20 @@ class CreateAccountPage(Page):
         super().__init__(parent, *args, **kwargs)
         self.user = user
 
-        current_row = 0
-        
         self.create_account_label = tk.Label(self,
                                              text="Create Account",
                                              font=("Arial", 16))
-        self.create_account_label.grid(row=current_row, column=0, pady=10)
-        current_row += 1
+        self.create_account_label.pack(pady=10)
 
         self.username_label_create = tk.Label(self, text="Username:")
-        self.username_label_create.grid(row=current_row, column=0, pady=5)
-        current_row += 1
-        
+        self.username_label_create.pack(pady=5)
         self.username_entry_create = tk.Entry(self)
-        self.username_entry_create.grid(row=current_row, column=0, pady=5)
-        current_row += 1
+        self.username_entry_create.pack(pady=5)
 
         self.password_label_create = tk.Label(self, text="Password:")
-        self.password_label_create.grid(row=current_row, column=0, pady=5)
-        current_row += 1
-        
+        self.password_label_create.pack(pady=5)
         self.password_entry_create = tk.Entry(self, show="*")
-        self.password_entry_create.grid(row=current_row, column=0, pady=5)
-        current_row += 1
+        self.password_entry_create.pack(pady=5)
 
         # Password strength instructions
         self.password_instructions = tk.Label(
@@ -290,13 +265,11 @@ class CreateAccountPage(Page):
                   "2. At least 1 uppercase and 1 lowercase letter\n"
                   "3. At least 1 number and 1 symbol"),
         )
-        self.password_instructions.grid(row=current_row, column=0, pady=5)
-        current_row += 1
+        self.password_instructions.pack(pady=5)
 
         # Password Strength Label
         self.password_strength_label_create = tk.Label(self, text="")
-        self.password_strength_label_create.grid(row=current_row, column=0, pady=5)
-        current_row += 1
+        self.password_strength_label_create.pack(pady=5)
 
         # Bind password entry to strength evaluation
         self.password_entry_create.bind("<KeyRelease>",
@@ -304,14 +277,13 @@ class CreateAccountPage(Page):
 
         self.create_account_button_final = tk.Button(
             self, text="Create Account", command=self.create_account)
-        self.create_account_button_final.grid(row=current_row, column=0, pady=20)
-        current_row += 1
+        self.create_account_button_final.pack(pady=20)
 
         self.back_to_landing_button = tk.Button(
             self,
             text="Back",
             command=lambda: self.parent.show_page("LandingPage"))
-        self.back_to_landing_button.grid(row=current_row, column=0, pady=10)
+        self.back_to_landing_button.pack(pady=10)
 
     def update_password_strength_create(self, event=None):
         """Updates password strength feedback during account creation."""
@@ -341,39 +313,29 @@ class LoginPage(Page):
         super().__init__(parent, *args, **kwargs)
         self.user = user
 
-        current_row = 0
-        
         self.login_label = tk.Label(self, text="Login", font=("Arial", 16))
-        self.login_label.grid(row=current_row, column=0, pady=10)
-        current_row += 1
+        self.login_label.pack(pady=10)
 
         self.username_label_login = tk.Label(self, text="Username:")
-        self.username_label_login.grid(row=current_row, column=0, pady=5)
-        current_row += 1
-        
+        self.username_label_login.pack(pady=5)
         self.username_entry_login = tk.Entry(self)
-        self.username_entry_login.grid(row=current_row, column=0, pady=5)
-        current_row += 1
+        self.username_entry_login.pack(pady=5)
 
         self.password_label_login = tk.Label(self, text="Password:")
-        self.password_label_login.grid(row=current_row, column=0, pady=5)
-        current_row += 1
-        
+        self.password_label_login.pack(pady=5)
         self.password_entry_login = tk.Entry(self, show="*")
-        self.password_entry_login.grid(row=current_row, column=0, pady=5)
-        current_row += 1
+        self.password_entry_login.pack(pady=5)
 
         self.login_button_final = tk.Button(self,
                                             text="Login",
                                             command=self.login)
-        self.login_button_final.grid(row=current_row, column=0, pady=20)
-        current_row += 1
+        self.login_button_final.pack(pady=20)
 
         self.back_to_landing_button_login = tk.Button(
             self,
             text="Back",
             command=lambda: self.parent.show_page("LandingPage"))
-        self.back_to_landing_button_login.grid(row=current_row, column=0, pady=10)
+        self.back_to_landing_button_login.pack(pady=10)
 
     def login(self):
         username = self.username_entry_login.get()
@@ -399,84 +361,71 @@ class CredentialsPage(Page):
         super().__init__(parent, *args, **kwargs)
         self.credential = credential
 
-        current_row = 0
-        
         self.credentials_label = tk.Label(self,
                                           text="Enter Your Gaming Credentials",
                                           font=("Arial", 16))
-        self.credentials_label.grid(row=current_row, column=0, columnspan=2, pady=10)
-        current_row += 1
+        self.credentials_label.pack(pady=10)
 
         # Twitch
         self.twitch_label = tk.Label(self, text="Twitch Username:")
-        self.twitch_label.grid(row=current_row, column=0, pady=5)
+        self.twitch_label.pack(pady=5)
         self.twitch_entry = tk.Entry(self)
-        self.twitch_entry.grid(row=current_row, column=1, pady=5)
-        current_row += 1
-        
-        self.twitch_pass_label = tk.Label(self, text="Twitch Password:")
-        self.twitch_pass_label.grid(row=current_row, column=0, pady=5)
-        self.twitch_pass_entry = tk.Entry(self, show="*")
-        self.twitch_pass_entry.grid(row=current_row, column=1, pady=5)
-        current_row += 1
+        self.twitch_entry.pack(pady=5)
+        self.twitch_label = tk.Label(self, text="Twitch Password:")
+        self.twitch_label.pack(pady=5)
+        self.twitch_entry = tk.Entry(self, show="*")
+        self.twitch_entry.pack(pady=5)
 
         # Discord
         self.discord_label = tk.Label(self, text="Discord Username:")
-        self.discord_label.grid(row=current_row, column=0, pady=5)
+        self.discord_label.pack(pady=5)
         self.discord_entry = tk.Entry(self)
-        self.discord_entry.grid(row=current_row, column=1, pady=5)
-        current_row += 1
-        
-        self.discord_pass_label = tk.Label(self, text="Discord Password:")
-        self.discord_pass_label.grid(row=current_row, column=0, pady=5)
-        self.discord_pass_entry = tk.Entry(self, show="*")
-        self.discord_pass_entry.grid(row=current_row, column=1, pady=5)
-        current_row += 1
+        self.discord_entry.pack(pady=5)
+        self.discord_label = tk.Label(self, text="Discord Password:")
+        self.discord_label.pack(pady=5)
+        self.discord_entry = tk.Entry(self, show="*")
+        self.discord_entry.pack(pady=5)
 
         # Steam
         self.steam_label = tk.Label(self, text="Steam Username:")
-        self.steam_label.grid(row=current_row, column=0, pady=5)
+        self.steam_label.pack(pady=5)
         self.steam_entry = tk.Entry(self)
-        self.steam_entry.grid(row=current_row, column=1, pady=5)
-        current_row += 1
-        
-        self.steam_pass_label = tk.Label(self, text="Steam Password:")
-        self.steam_pass_label.grid(row=current_row, column=0, pady=5)
-        self.steam_pass_entry = tk.Entry(self, show="*")
-        self.steam_pass_entry.grid(row=current_row, column=1, pady=5)
-        current_row += 1
+        self.steam_entry.pack(pady=5)
+        self.steam_label = tk.Label(self, text="Steam Password:")
+        self.steam_label.pack(pady=5)
+        self.steam_entry = tk.Entry(self, show="*")
+        self.steam_entry.pack(pady=5)
 
         # Store Button
         self.store_button = tk.Button(self,
                                       text="Store Credentials",
                                       command=self.store_gaming_credentials)
-        self.store_button.grid(row=current_row, column=0, columnspan=2, pady=20)
-        current_row += 1
+        self.store_button.pack(pady=20)
 
-        # Navigation buttons frame
+        # Navigation buttons to other pages
         self.nav_frame = tk.Frame(self)
-        self.nav_frame.grid(row=current_row, column=0, columnspan=2, pady=10)
+        self.nav_frame.pack(pady=10)
 
         self.safe_communication_button = tk.Button(
             self.nav_frame,
             text="Safe Communication Practices",
             command=lambda: self.parent.show_page("SafeCommunicationPage"),
         )
-        self.safe_communication_button.grid(row=0, column=0, padx=5)
+        self.safe_communication_button.pack(side="left", padx=5)
 
         self.incident_response_button = tk.Button(
             self.nav_frame,
             text="Incident Response",
             command=lambda: self.parent.show_page("IncidentResponsePage"),
         )
-        self.incident_response_button.grid(row=0, column=1, padx=5)
+        self.incident_response_button.pack(side="left", padx=5)
 
         # Logout Button
         self.logout_button = tk.Button(
             self.nav_frame,
             text="Logout",
             command=lambda: self.parent.show_page("LandingPage"))
-        self.logout_button.grid(row=0, column=2, padx=5)
+        self.logout_button.pack(side="left", padx=5)
 
     def store_gaming_credentials(self):
         """Handles storing gaming credentials."""
@@ -491,13 +440,9 @@ class SafeCommunicationPage(Page):
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        
-        current_row = 0
-        
         self.safe_communication_label = tk.Label(
             self, text="Safe Communication Practices", font=("Arial", 16))
-        self.safe_communication_label.grid(row=current_row, column=0, pady=10)
-        current_row += 1
+        self.safe_communication_label.pack(pady=10)
 
         # Back button to credentials page
         self.back_to_credentials_button_safe = tk.Button(
@@ -505,23 +450,19 @@ class SafeCommunicationPage(Page):
             text="Back to Credentials",
             command=lambda: self.parent.show_page("CredentialsPage"),
         )
-        self.back_to_credentials_button_safe.grid(row=current_row, column=0, pady=10)
+        self.back_to_credentials_button_safe.pack(pady=10)
 
 
 class IncidentResponsePage(Page):
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
-        
-        current_row = 0
-        
         self.incident_response_label = tk.Label(
             self,
             text="Incident Response and Recovery Plans",
             font=("Arial", 16),
         )
-        self.incident_response_label.grid(row=current_row, column=0, pady=10)
-        current_row += 1
+        self.incident_response_label.pack(pady=10)
 
         # Back button to credentials page
         self.back_to_credentials_button_incident = tk.Button(
@@ -529,7 +470,7 @@ class IncidentResponsePage(Page):
             text="Back to Credentials",
             command=lambda: self.parent.show_page("CredentialsPage"),
         )
-        self.back_to_credentials_button_incident.grid(row=current_row, column=0, pady=10)
+        self.back_to_credentials_button_incident.pack(pady=10)
 
 
 class App(tk.Tk):
@@ -537,9 +478,7 @@ class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Cyber Esports App")
-        self.geometry("400x600")
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        self.geometry("414x896")
         self.logged_in_user = None
 
         # Initialise database
