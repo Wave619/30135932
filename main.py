@@ -445,6 +445,17 @@ class SafeCommunicationPage(Page):
             self, text="Safe Communication Practices", font=("Arial", 16))
         self.safe_communication_label.pack(pady=10)
 
+        # Content
+        self.content = tk.Text(self, height=10, width=50, wrap=tk.WORD)
+        self.content.insert(tk.END, 
+            "1. Never share your passwords or account details in chat\n\n" +
+            "2. Be cautious of suspicious links in game chat or Discord\n\n" +
+            "3. Use two-factor authentication whenever possible\n\n" +
+            "4. Report toxic behavior and harassment to platform moderators\n\n" +
+            "5. Keep your personal information private while streaming")
+        self.content.config(state='disabled')
+        self.content.pack(pady=10)
+
         # Back button to credentials page
         self.back_to_credentials_button_safe = tk.Button(
             self,
@@ -464,6 +475,18 @@ class IncidentResponsePage(Page):
             font=("Arial", 16),
         )
         self.incident_response_label.pack(pady=10)
+
+        # Content
+        self.content = tk.Text(self, height=10, width=50, wrap=tk.WORD)
+        self.content.insert(tk.END,
+            "If your account is compromised:\n\n" +
+            "1. Immediately change your passwords\n\n" +
+            "2. Contact platform support services\n\n" +
+            "3. Enable additional security features\n\n" +
+            "4. Review recent account activity\n\n" +
+            "5. Document any unauthorized changes")
+        self.content.config(state='disabled')
+        self.content.pack(pady=10)
 
         # Back button to credentials page
         self.back_to_credentials_button_incident = tk.Button(
