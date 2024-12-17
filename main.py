@@ -1,8 +1,6 @@
-#REMOVE ADMIN ACCESS!!!
 #FORMAT THE CRDENTIALS PAGE CORRECTLY
 #ADD CONTENT TO SAFE COMMUNCATION AND IR PAGE
-#ADD 2FA
-#encrypt CREDENTIALS
+
 
 import tkinter as tk
 from tkinter import messagebox
