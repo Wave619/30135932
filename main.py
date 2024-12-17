@@ -493,7 +493,7 @@ class LoginPage(Page):
             )
             return
 
-        if self.user.verify_credentials(username, password):
+        if self.user.verify_credentials(username, hashed_password):
             self.user.db.check_compromised_passwords()
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
