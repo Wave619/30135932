@@ -221,11 +221,14 @@ class Database:
             bool: True if credentials are valid
         """
         encrypted_username = self.encrypt(username)
-        self.cursor.execute(
-            "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-            (encrypted_username, password))
-        result = self.cursor.fetchone()
-        return result is not None
+        try:
+            self.cursor.execute(
+                "SELECT * FROM users WHERE username = ? AND password_hash = ?",
+                (encrypted_username, password))
+            result = self.cursor.fetchone()
+            return result is not None
+        except Exception:
+            return False
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
         """
