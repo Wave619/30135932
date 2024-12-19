@@ -1,53 +1,36 @@
-
-# Main application file for the Cyber Esports App
-# This application provides secure credential management for gaming platforms
-# with features like 2FA, encryption, and security best practices
-
-import tkinter as tk
-from tkinter import messagebox
+import tkinter as tk #For the UI
+from tkinter import messagebox # For the message boxes to display errors
 import hashlib  # For password hashing
 import re  # For password validation
 import sqlite3  # For database operations
-import os
 import random  # For 2FA code generation
 from cryptography.fernet import Fernet  # For encryption/decryption
 
 
-class User:
-    """Handles user authentication and account management"""
-
+class User: #Handles user authentication and account management
+   
     def __init__(self, db):
         self.db = db  # Database connection
         self.two_factor_code = None  # Stores 2FA code temporarily
 
-    def create_account(self, username, password):
-        """Creates a new user account with validation.
-        Args:
-            username (str): Desired username
-            password (str): User's password
-        Returns:
-            bool: True if account creation successful, False otherwise
-        """
-        if self.db.is_duplicate(username):
+    def create_account(self, username, password):# Creates a new user account with validation
+        
+        if self.db.is_duplicate(username): #Checks if the username is duplicated in the database
             messagebox.showerror("Account Creation Failed",
-                                 "Username already in use.")
+                                 "Username already in use.") #Shows error message in the event the user name is duplicated
             return
 
-        if not self.evaluate_password(password):
+        if not self.evaluate_password(password): #Evaluates the password based on a set of paramenters. 
             messagebox.showerror(
                 "Account Creation Failed",
-                "Your password is invalid. Please follow the instructions to create a stronger password."
-            )
+                "Your password is invalid. Please follow the instructions to create a stronger password.") #Shows error message in the event the password does not meet the requirments
             return
 
-        self.db.store_credentials(username, password)
+        self.db.store_credentials(username, password) #Stores user credentials into the database
         return True
 
-    def generate_two_factor_code(self):
-        """Generates a random 4-digit code for 2FA.
-        Returns:
-            str: 4-digit verification code
-        """
+    def generate_two_factor_code(self): #Generates a random 4-digit code for 2FA
+        
         self.two_factor_code = str(random.randint(1000, 9999))
         return self.two_factor_code
 
@@ -70,27 +53,21 @@ class User:
             return False
         return True
 
-    def login(self):
-        """Handles user login with 2FA."""
-        username = self.username_entry_login.get()
-        password = self.password_entry_login.get()
-
+    def login(self, username, password):
+        """Handles user login with 2FA.
+        Args:
+            username (str): Username to verify
+            password (str): Password to verify
+        Returns:
+            bool: True if credentials are valid, False otherwise
+        """
         # Hash the password to compare it with the stored hashed password
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         # Verify login credentials from the database
         if self.db.verify_login(username, hashed_password):
-            # Generate and store 2FA code
-            two_factor_code = self.generate_two_factor_code()
-            print(f"Your 2FA code is: {two_factor_code}") 
-
-            # Store the 2FA code in the User object
-            self.user.two_factor_code = two_factor_code
-
-            # Show the TwoFactorPage for entering the 2FA code
-            self.parent.show_page("TwoFactorPage")
-        else:
-            messagebox.showerror("Login Failed", "Invalid username or password.")
+            return True
+        return False
 
 
 class Credential:
@@ -446,11 +423,7 @@ class LoginPage(Page):
         username = self.username_entry_login.get()
         password = self.password_entry_login.get()
 
-        # Hash the password to compare it with the stored hashed password
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
-        # Verify login credentials from the database
-        if self.user.db.verify_login(username, hashed_password):
+        if self.user.login(username, password):
             # Generate and show 2FA code
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
