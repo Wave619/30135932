@@ -61,9 +61,8 @@ class User: #Handles user authentication and account management
         Returns:
             bool: True if credentials are valid, False otherwise
         """
-        # Hash the password before verification
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        if self.db.verify_login(username, hashed_password):
+        # Pass raw password to verify_login where it will be hashed
+        if self.db.verify_login(username, password):
             return True
         return False
 
@@ -174,7 +173,7 @@ class Database:
         """Verifies user login credentials.
         Args:
             username (str): Username to verify
-            password (str): Hashed password to verify
+            password (str): Raw password to verify
         Returns:
             bool: True if credentials are valid, False otherwise
         """
@@ -184,7 +183,8 @@ class Database:
             result = self.cursor.fetchone()
             if result is not None:
                 stored_password_hash = result[1]
-                return stored_password_hash == password  # Compare hashed passwords directly
+                input_password_hash = hashlib.sha256(password.encode()).hexdigest()
+                return stored_password_hash == input_password_hash
             return False
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Failed to verify login: {str(e)}")
@@ -242,7 +242,8 @@ class Database:
             password (str): Password to hash and store
         """
         encrypted_username = self.encrypt(username)
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        raw_password = password.encode()
+        hashed_password = hashlib.sha256(raw_password).hexdigest()
         try:
             self.cursor.execute(
                 "INSERT INTO users (username, password_hash) VALUES (?, ?)",
