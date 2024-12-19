@@ -61,8 +61,9 @@ class User: #Handles user authentication and account management
         Returns:
             bool: True if credentials are valid, False otherwise
         """
-        # Verify login credentials from the database
-        if self.db.verify_login(username, password):
+        # Hash the password before verification
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        if self.db.verify_login(username, hashed_password):
             return True
         return False
 
@@ -183,8 +184,7 @@ class Database:
             result = self.cursor.fetchone()
             if result is not None:
                 stored_password_hash = result[1]
-                hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
-                return stored_password_hash == hashed_input_password  # Compare hashed passwords
+                return stored_password_hash == password  # Compare hashed passwords directly
             return False
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Failed to verify login: {str(e)}")
