@@ -11,6 +11,7 @@ import re
 import sqlite3
 import os
 import random
+import time
 from cryptography.fernet import Fernet
 
 
@@ -19,6 +20,8 @@ class User:
     def __init__(self, db):
         self.db = db
         self.two_factor_code = None
+        self.login_attempts = {}  # Track attempts per username
+        self.lockout_time = 300  # 5 minutes lockout
 
     def create_account(self, username, password):
         """Creates a new user account."""
@@ -58,24 +61,46 @@ class User:
 
     def login(self):
         username = self.username_entry_login.get()
-        password = self.password_entry_login.get()
+        current_time = time.time()
+        
+        # Check if user is locked out
+        if username in self.login_attempts:
+            attempts, lockout_timestamp = self.login_attempts[username]
+            if attempts >= 3 and current_time - lockout_timestamp < self.lockout_time:
+                remaining_time = int(self.lockout_time - (current_time - lockout_timestamp))
+                messagebox.showerror("Account Locked", 
+                    f"Too many failed attempts. Please try again in {remaining_time} seconds.")
+                return
 
-        # Hash the password to compare it with the stored hashed password
+        password = self.password_entry_login.get()
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        # Verify login credentials from the database
+        # Verify login credentials
         if self.db.verify_login(username, hashed_password):
+            # Reset attempts on successful login
+            if username in self.login_attempts:
+                del self.login_attempts[username]
+                
             # Generate and store 2FA code
             two_factor_code = self.generate_two_factor_code()
-            print(f"Your 2FA code is: {two_factor_code}") 
-
-            # Store the 2FA code in the User object
+            print(f"Your 2FA code is: {two_factor_code}")
             self.user.two_factor_code = two_factor_code
-
-            # Show the TwoFactorPage for entering the 2FA code
             self.parent.show_page("TwoFactorPage")
         else:
-            messagebox.showerror("Login Failed", "Invalid username or password.")
+            # Track failed attempt
+            if username not in self.login_attempts:
+                self.login_attempts[username] = [1, current_time]
+            else:
+                attempts, _ = self.login_attempts[username]
+                self.login_attempts[username] = [attempts + 1, current_time]
+                
+            remaining_attempts = 3 - self.login_attempts[username][0]
+            if remaining_attempts > 0:
+                messagebox.showerror("Login Failed", 
+                    f"Invalid username or password. {remaining_attempts} attempts remaining.")
+            else:
+                messagebox.showerror("Account Locked", 
+                    f"Too many failed attempts. Account locked for {self.lockout_time} seconds.")
 
 
 
@@ -532,7 +557,7 @@ class App(tk.Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Cyber Esports App")
-        self.geometry("400x600")
+        self.geometry("414x896")
         self.logged_in_user = None
 
         # Initialise database
