@@ -237,7 +237,103 @@ class Page(tk.Frame):
         self.grid(row=0, column=0, sticky="nsew")
 
 
-[Rest of the classes remain unchanged as they are UI components with self-documenting names and clear structure]
+class LandingPage(Page):
+    def __init__(self, parent):
+        super().__init__(parent)
+        tk.Label(self, text="Welcome to Cyber Esports App").pack(pady=20)
+        tk.Button(self, text="Login", command=lambda: parent.show_page("LoginPage")).pack(pady=10)
+        tk.Button(self, text="Create Account", command=lambda: parent.show_page("CreateAccountPage")).pack(pady=10)
+
+
+class LoginPage(Page):
+    def __init__(self, parent, user):
+        super().__init__(parent)
+        self.user = user
+        tk.Label(self, text="Login").pack(pady=20)
+        self.username_entry = tk.Entry(self)
+        self.username_entry.pack(pady=10)
+        self.password_entry = tk.Entry(self, show="*")
+        self.password_entry.pack(pady=10)
+        tk.Button(self, text="Login", command=self.user.login).pack(pady=10)
+
+
+class CreateAccountPage(Page):
+    def __init__(self, parent, user):
+        super().__init__(parent)
+        self.user = user
+        tk.Label(self, text="Create Account").pack(pady=20)
+        self.username_entry = tk.Entry(self)
+        self.username_entry.pack(pady=10)
+        self.password_entry = tk.Entry(self, show="*")
+        self.password_entry.pack(pady=10)
+        tk.Button(self, text="Create", command=lambda: self.user.create_account(
+            self.username_entry.get(), self.password_entry.get())).pack(pady=10)
+
+
+class CredentialsPage(Page):
+    def __init__(self, parent, credential):
+        super().__init__(parent)
+        self.credential = credential
+        tk.Label(self, text="Gaming Credentials").pack(pady=20)
+        self.twitch_entry = tk.Entry(self)
+        self.discord_entry = tk.Entry(self)
+        self.steam_entry = tk.Entry(self)
+        self.twitch_entry.pack(pady=10)
+        self.discord_entry.pack(pady=10)
+        self.steam_entry.pack(pady=10)
+        tk.Button(self, text="Save", command=self.save_credentials).pack(pady=10)
+
+    def save_credentials(self):
+        self.credential.store_gaming_credentials(
+            self.parent.logged_in_user,
+            self.twitch_entry.get(),
+            self.discord_entry.get(),
+            self.steam_entry.get()
+        )
+
+
+class SafeCommunicationPage(Page):
+    def __init__(self, parent):
+        super().__init__(parent)
+        tk.Label(self, text="Safe Communication Guidelines").pack(pady=20)
+        guidelines = [
+            "Never share personal information",
+            "Use secure communication channels",
+            "Be aware of phishing attempts",
+            "Report suspicious behavior"
+        ]
+        for guideline in guidelines:
+            tk.Label(self, text=f"• {guideline}").pack(pady=5)
+
+
+class IncidentResponsePage(Page):
+    def __init__(self, parent):
+        super().__init__(parent)
+        tk.Label(self, text="Incident Response Procedures").pack(pady=20)
+        procedures = [
+            "Document the incident",
+            "Change affected passwords",
+            "Contact support immediately",
+            "Enable additional security measures"
+        ]
+        for procedure in procedures:
+            tk.Label(self, text=f"• {procedure}").pack(pady=5)
+
+
+class TwoFactorPage(Page):
+    def __init__(self, parent, user):
+        super().__init__(parent)
+        self.user = user
+        tk.Label(self, text="Enter 2FA Code").pack(pady=20)
+        self.code_entry = tk.Entry(self)
+        self.code_entry.pack(pady=10)
+        tk.Button(self, text="Verify", command=self.verify_code).pack(pady=10)
+
+    def verify_code(self):
+        if self.code_entry.get() == self.user.two_factor_code:
+            self.parent.show_page("CredentialsPage")
+        else:
+            messagebox.showerror("Verification Failed", "Invalid 2FA code")
 
 
 class App(tk.Tk):
