@@ -243,10 +243,14 @@ class Database:
         """
         encrypted_username = self.encrypt(username)
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        self.cursor.execute(
-            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-            (encrypted_username, hashed_password))
-        self.connection.commit()
+        try:
+            self.cursor.execute(
+                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                (encrypted_username, hashed_password))
+            self.connection.commit()
+        except sqlite3.Error as e:
+            messagebox.showerror("Database Error", f"Failed to store credentials: {str(e)}")
+            raise
 
 
 class Page(tk.Frame):
