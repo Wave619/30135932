@@ -61,11 +61,8 @@ class User: #Handles user authentication and account management
         Returns:
             bool: True if credentials are valid, False otherwise
         """
-        # Hash the password to compare it with the stored hashed password
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
         # Verify login credentials from the database
-        if self.db.verify_login(username, hashed_password):
+        if self.db.verify_login(username, password):
             return True
         return False
 
