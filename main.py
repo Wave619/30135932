@@ -1,22 +1,6 @@
+#FORMAT THE CRDENTIALS PAGE CORRECTLY
+#ADD CONTENT TO SAFE COMMUNCATION AND IR PAGE
 
-"""
-Cyber Esports App - A secure credential manager for gaming platforms
-Author: Your Name
-Version: 1.0
-
-This application provides a secure way to manage gaming credentials with features including:
-- Two-factor authentication (2FA)
-- Encrypted credential storage
-- Password strength validation
-- Safe communication guidelines
-- Incident response procedures
-
-Security Features:
-- Password hashing using SHA-256
-- Data encryption using Fernet (symmetric encryption)
-- 2FA using random 4-digit codes
-- Secure database storage using SQLite
-"""
 
 import tkinter as tk
 from tkinter import messagebox
@@ -29,24 +13,13 @@ from cryptography.fernet import Fernet
 
 
 class User:
-    """Handles user authentication and account management."""
 
     def __init__(self, db):
-        """Initialize User with database connection."""
         self.db = db
         self.two_factor_code = None
 
     def create_account(self, username, password):
-        """
-        Creates a new user account.
-        
-        Args:
-            username (str): Desired username
-            password (str): User's password
-            
-        Returns:
-            bool: True if account creation successful, False otherwise
-        """
+        """Creates a new user account."""
         if self.db.is_duplicate(username):
             messagebox.showerror("Account Creation Failed",
                                  "Username already in use.")
@@ -63,25 +36,12 @@ class User:
         return True
 
     def generate_two_factor_code(self):
-        """
-        Generates a random 4-digit code for 2FA.
-        
-        Returns:
-            str: 4-digit verification code
-        """
+        """Generates a random 4-digit code."""
         self.two_factor_code = str(random.randint(1000, 9999))
         return self.two_factor_code
 
     def evaluate_password(self, password):
-        """
-        Evaluates password strength using multiple criteria.
-        
-        Args:
-            password (str): Password to evaluate
-            
-        Returns:
-            bool: True if password meets all criteria, False otherwise
-        """
+        """Evaluates password strength."""
         if len(password) < 8:
             return False
         if not re.search(r'[A-Z]', password):
@@ -95,39 +55,36 @@ class User:
         return True
 
     def login(self):
-        """Handles user login with password verification and 2FA."""
         username = self.username_entry_login.get()
         password = self.password_entry_login.get()
 
+        # Hash the password to compare it with the stored hashed password
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
+        # Verify login credentials from the database
         if self.db.verify_login(username, hashed_password):
+            # Generate and store 2FA code
             two_factor_code = self.generate_two_factor_code()
             print(f"Your 2FA code is: {two_factor_code}") 
 
+            # Store the 2FA code in the User object
             self.user.two_factor_code = two_factor_code
+
+            # Show the TwoFactorPage for entering the 2FA code
             self.parent.show_page("TwoFactorPage")
         else:
             messagebox.showerror("Login Failed", "Invalid username or password.")
 
 
+
+
 class Credential:
-    """Manages gaming platform credentials."""
 
     def __init__(self, db):
-        """Initialize with database connection."""
         self.db = db
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
-        """
-        Stores encrypted gaming credentials.
-        
-        Args:
-            username (str): User's username
-            twitch (str): Twitch credentials
-            discord (str): Discord credentials
-            steam (str): Steam credentials
-        """
+        """Stores gaming credentials for the user."""
         if not twitch and not discord and not steam:
             messagebox.showerror(
                 "Input Error",
@@ -140,10 +97,7 @@ class Credential:
 
 
 class Database:
-    """Handles all database operations with encryption."""
-    
     def __init__(self, db_name="CyberEsportsApp.db"):
-        """Initialize database with encryption key."""
         self.connection = sqlite3.connect(db_name)
         self.cursor = self.connection.cursor()
         self.key = Fernet.generate_key()
@@ -151,7 +105,8 @@ class Database:
         self.create_tables()
 
     def create_tables(self):
-        """Creates database tables for users and gaming credentials."""
+        """Creates the necessary database tables if they don't exist."""
+        # Create users table
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY,
@@ -159,6 +114,7 @@ class Database:
             )
         ''')
 
+        # Create gaming credentials table
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS gaming_credentials (
                 username TEXT PRIMARY KEY,
@@ -172,15 +128,13 @@ class Database:
         self.connection.commit()
 
     def encrypt(self, data):
-        """Encrypts data using Fernet symmetric encryption."""
         return self.cipher.encrypt(data.encode()).decode()
 
     def decrypt(self, data):
-        """Decrypts data using Fernet symmetric encryption."""
         return self.cipher.decrypt(data.encode()).decode()
 
     def verify_login(self, username, password):
-        """Verifies user login credentials."""
+        """Verifies login credentials."""
         encrypted_username = self.encrypt(username)
         self.cursor.execute(
             "SELECT * FROM users WHERE username = ? AND password_hash = ?",
@@ -189,7 +143,6 @@ class Database:
         return result is not None
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
-        """Stores encrypted gaming credentials in database."""
         try:
             if twitch:
                 twitch = self.encrypt(twitch)
@@ -208,18 +161,18 @@ class Database:
             raise
 
     def is_duplicate(self, username):
-        """Checks for duplicate usernames."""
+        """Checks if username already exists."""
         encrypted_username = self.encrypt(username)
         self.cursor.execute("SELECT username FROM users WHERE username = ?", (encrypted_username,))
         return self.cursor.fetchone() is not None
 
     def close(self):
-        """Closes database connection."""
+        """Close the database connection."""
         if self.connection:
             self.connection.close()
 
     def store_credentials(self, username, password):
-        """Stores new user credentials."""
+        """Stores user credentials."""
         encrypted_username = self.encrypt(username)
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         self.cursor.execute(
@@ -228,8 +181,9 @@ class Database:
         self.connection.commit()
 
 
+
+
 class Page(tk.Frame):
-    """Base class for all application pages."""
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
@@ -238,106 +192,336 @@ class Page(tk.Frame):
 
 
 class LandingPage(Page):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Label(self, text="Welcome to Cyber Esports App").pack(pady=20)
-        tk.Button(self, text="Login", command=lambda: parent.show_page("LoginPage")).pack(pady=10)
-        tk.Button(self, text="Create Account", command=lambda: parent.show_page("CreateAccountPage")).pack(pady=10)
 
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.landing_label = tk.Label(self,
+                                      text="Welcome to Cyber Esports App",
+                                      font=("Arial", 16))
+        self.landing_label.pack(pady=20)
 
-class LoginPage(Page):
-    def __init__(self, parent, user):
-        super().__init__(parent)
+        self.create_account_button = tk.Button(
+            self,
+            text="Create Account",
+            command=lambda: self.parent.show_page("CreateAccountPage"))
+        self.create_account_button.pack(pady=10)
+
+        self.login_button_landing = tk.Button(
+            self,
+            text="Login",
+            command=lambda: self.parent.show_page("LoginPage"))
+        self.login_button_landing.pack(pady=10)
+
+class TwoFactorPage(Page):
+    def __init__(self, parent, user, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
         self.user = user
-        tk.Label(self, text="Login").pack(pady=20)
-        self.username_entry = tk.Entry(self)
-        self.username_entry.pack(pady=10)
-        self.password_entry = tk.Entry(self, show="*")
-        self.password_entry.pack(pady=10)
-        tk.Button(self, text="Login", command=self.user.login).pack(pady=10)
+
+        self.label = tk.Label(self, text="Enter 2FA Code", font=("Arial", 16))
+        self.label.pack(pady=10)
+
+        self.code_entry = tk.Entry(self)
+        self.code_entry.pack(pady=10)
+
+        self.submit_button = tk.Button(self, text="Verify Code", command=self.verify_code)
+        self.submit_button.pack(pady=10)
+
+    def verify_code(self):
+        entered_code = self.code_entry.get()
+
+        # Check if the entered code matches the generated one
+        if entered_code == self.user.two_factor_code:
+            messagebox.showinfo("Success", "2FA Verified!")
+            self.parent.show_page("CredentialsPage")  # Proceed to credentials page
+        else:
+            messagebox.showerror("Error", "Invalid 2FA Code")
 
 
 class CreateAccountPage(Page):
-    def __init__(self, parent, user):
-        super().__init__(parent)
+
+    def __init__(self, parent, user, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
         self.user = user
-        tk.Label(self, text="Create Account").pack(pady=20)
-        self.username_entry = tk.Entry(self)
-        self.username_entry.pack(pady=10)
-        self.password_entry = tk.Entry(self, show="*")
-        self.password_entry.pack(pady=10)
-        tk.Button(self, text="Create", command=lambda: self.user.create_account(
-            self.username_entry.get(), self.password_entry.get())).pack(pady=10)
+
+        self.create_account_label = tk.Label(self,
+                                             text="Create Account",
+                                             font=("Arial", 16))
+        self.create_account_label.pack(pady=10)
+
+        self.username_label_create = tk.Label(self, text="Username:")
+        self.username_label_create.pack(pady=5)
+        self.username_entry_create = tk.Entry(self)
+        self.username_entry_create.pack(pady=5)
+
+        self.password_label_create = tk.Label(self, text="Password:")
+        self.password_label_create.pack(pady=5)
+        self.password_entry_create = tk.Entry(self, show="*")
+        self.password_entry_create.pack(pady=5)
+
+        # Password strength instructions
+        self.password_instructions = tk.Label(
+            self,
+            text=("Password Strength Requirements:\n"
+                  "1. At least 8 characters long (Strong if 13+)\n"
+                  "2. At least 1 uppercase and 1 lowercase letter\n"
+                  "3. At least 1 number and 1 symbol"),
+        )
+        self.password_instructions.pack(pady=5)
+
+        # Password Strength Label
+        self.password_strength_label_create = tk.Label(self, text="")
+        self.password_strength_label_create.pack(pady=5)
+
+        # Bind password entry to strength evaluation
+        self.password_entry_create.bind("<KeyRelease>",
+                                        self.update_password_strength_create)
+
+        self.create_account_button_final = tk.Button(
+            self, text="Create Account", command=self.create_account)
+        self.create_account_button_final.pack(pady=20)
+
+        self.back_to_landing_button = tk.Button(
+            self,
+            text="Back",
+            command=lambda: self.parent.show_page("LandingPage"))
+        self.back_to_landing_button.pack(pady=10)
+
+    def update_password_strength_create(self, event=None):
+        """Updates password strength feedback during account creation."""
+        password = self.password_entry_create.get()
+        password_strength = self.user.evaluate_password(password)
+
+        if password_strength:
+            self.password_strength_label_create.config(
+                text="Password Strength: Strong", fg="green")
+        else:
+            self.password_strength_label_create.config(
+                text="Password Strength: Invalid", fg="red")
+
+    def create_account(self):
+        """Handles account creation."""
+        username = self.username_entry_create.get()
+        password = self.password_entry_create.get()
+
+        if self.user.create_account(username, password):
+            self.parent.show_page(
+                "CredentialsPage")  # Automatically log in after creation
+
+
+class LoginPage(Page):
+
+    def __init__(self, parent, user, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.user = user
+
+        self.login_label = tk.Label(self, text="Login", font=("Arial", 16))
+        self.login_label.pack(pady=10)
+
+        self.username_label_login = tk.Label(self, text="Username:")
+        self.username_label_login.pack(pady=5)
+        self.username_entry_login = tk.Entry(self)
+        self.username_entry_login.pack(pady=5)
+
+        self.password_label_login = tk.Label(self, text="Password:")
+        self.password_label_login.pack(pady=5)
+        self.password_entry_login = tk.Entry(self, show="*")
+        self.password_entry_login.pack(pady=5)
+
+        self.login_button_final = tk.Button(self,
+                                            text="Login",
+                                            command=self.login)
+        self.login_button_final.pack(pady=20)
+
+        self.back_to_landing_button_login = tk.Button(
+            self,
+            text="Back",
+            command=lambda: self.parent.show_page("LandingPage"))
+        self.back_to_landing_button_login.pack(pady=10)
+
+    def login(self):
+        username = self.username_entry_login.get()
+        password = self.password_entry_login.get()
+
+        # Hash the password to compare it with the stored hashed password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # Verify login credentials from the database
+        if self.user.db.verify_login(username, hashed_password):
+            # Generate and show 2FA code
+            two_factor_code = self.user.generate_two_factor_code()
+            messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
+            self.parent.logged_in_user = username
+            self.parent.show_page("TwoFactorPage")
+        else:
+            messagebox.showerror("Login Failed", "Invalid username or password.")
 
 
 class CredentialsPage(Page):
-    def __init__(self, parent, credential):
-        super().__init__(parent)
-        self.credential = credential
-        tk.Label(self, text="Gaming Credentials").pack(pady=20)
-        self.twitch_entry = tk.Entry(self)
-        self.discord_entry = tk.Entry(self)
-        self.steam_entry = tk.Entry(self)
-        self.twitch_entry.pack(pady=10)
-        self.discord_entry.pack(pady=10)
-        self.steam_entry.pack(pady=10)
-        tk.Button(self, text="Save", command=self.save_credentials).pack(pady=10)
 
-    def save_credentials(self):
-        self.credential.store_gaming_credentials(
-            self.parent.logged_in_user,
-            self.twitch_entry.get(),
-            self.discord_entry.get(),
-            self.steam_entry.get()
+    def __init__(self, parent, credential, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.credential = credential
+
+        self.credentials_label = tk.Label(self,
+                                          text="Enter Your Gaming Credentials",
+                                          font=("Arial", 16))
+        self.credentials_label.pack(pady=10)
+
+        # Twitch
+        self.twitch_label = tk.Label(self, text="Twitch Username:")
+        self.twitch_label.pack(pady=5)
+        self.twitch_entry = tk.Entry(self)
+        self.twitch_entry.pack(pady=5)
+        self.twitch_label = tk.Label(self, text="Twitch Password:")
+        self.twitch_label.pack(pady=5)
+        self.twitch_entry = tk.Entry(self, show="*")
+        self.twitch_entry.pack(pady=5)
+
+        # Discord
+        self.discord_label = tk.Label(self, text="Discord Username:")
+        self.discord_label.pack(pady=5)
+        self.discord_entry = tk.Entry(self)
+        self.discord_entry.pack(pady=5)
+        self.discord_label = tk.Label(self, text="Discord Password:")
+        self.discord_label.pack(pady=5)
+        self.discord_entry = tk.Entry(self, show="*")
+        self.discord_entry.pack(pady=5)
+
+        # Steam
+        self.steam_label = tk.Label(self, text="Steam Username:")
+        self.steam_label.pack(pady=5)
+        self.steam_entry = tk.Entry(self)
+        self.steam_entry.pack(pady=5)
+        self.steam_label = tk.Label(self, text="Steam Password:")
+        self.steam_label.pack(pady=5)
+        self.steam_entry = tk.Entry(self, show="*")
+        self.steam_entry.pack(pady=5)
+
+        # Store Button
+        self.store_button = tk.Button(self,
+                                      text="Store Credentials",
+                                      command=self.store_gaming_credentials)
+        self.store_button.pack(pady=20)
+
+        # Navigation buttons to other pages
+        self.nav_frame = tk.Frame(self)
+        self.nav_frame.pack(pady=10)
+
+        self.safe_communication_button = tk.Button(
+            self.nav_frame,
+            text="Safe Communication Practices",
+            command=lambda: self.parent.show_page("SafeCommunicationPage"),
         )
+        self.safe_communication_button.pack(side="left", padx=5)
+
+        self.incident_response_button = tk.Button(
+            self.nav_frame,
+            text="Incident Response",
+            command=lambda: self.parent.show_page("IncidentResponsePage"),
+        )
+        self.incident_response_button.pack(side="left", padx=5)
+
+        # Logout Button
+        self.logout_button = tk.Button(
+            self.nav_frame,
+            text="Logout",
+            command=lambda: self.parent.show_page("LandingPage"))
+        self.logout_button.pack(side="left", padx=5)
+
+    def store_gaming_credentials(self):
+        """Handles storing gaming credentials."""
+        twitch = self.twitch_entry.get()
+        discord = self.discord_entry.get()
+        steam = self.steam_entry.get()
+        self.credential.store_gaming_credentials(self.parent.logged_in_user,
+                                                 twitch, discord, steam)
 
 
 class SafeCommunicationPage(Page):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Label(self, text="Safe Communication Guidelines").pack(pady=20)
-        guidelines = [
-            "Never share personal information",
-            "Use secure communication channels",
-            "Be aware of phishing attempts",
-            "Report suspicious behavior"
+
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.safe_communication_label = tk.Label(
+            self, text="Safe Communication Practices", font=("Arial", 16))
+        self.safe_communication_label.pack(pady=10)
+
+        # Create a frame for the content
+        content_frame = tk.Frame(self)
+        content_frame.pack(pady=10, padx=20)
+
+        tips = [
+            "1. Never share your passwords or account credentials in chat",
+            "2. Be cautious with links shared in game chat or Discord",
+            "3. Use unique passwords for each gaming platform",
+            "4. Enable two-factor authentication when available",
+            "5. Avoid sharing personal information during gameplay",
+            "6. Report suspicious behavior to platform moderators",
+            "7. Use voice chat only with trusted teammates",
+            "8. Be careful when downloading game mods or add-ons"
         ]
-        for guideline in guidelines:
-            tk.Label(self, text=f"• {guideline}").pack(pady=5)
+
+        for tip in tips:
+            tip_label = tk.Label(content_frame, text=tip, wraplength=350, justify="left")
+            tip_label.pack(pady=5, anchor="w")
+
+        # Back button to credentials page
+        self.back_to_credentials_button_safe = tk.Button(
+            self,
+            text="Back to Credentials",
+            command=lambda: self.parent.show_page("CredentialsPage"),
+        )
+        self.back_to_credentials_button_safe.pack(pady=10)
 
 
 class IncidentResponsePage(Page):
-    def __init__(self, parent):
-        super().__init__(parent)
-        tk.Label(self, text="Incident Response Procedures").pack(pady=20)
-        procedures = [
-            "Document the incident",
-            "Change affected passwords",
-            "Contact support immediately",
-            "Enable additional security measures"
+
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.incident_response_label = tk.Label(
+            self,
+            text="Incident Response and Recovery Plans",
+            font=("Arial", 16),
+        )
+        self.incident_response_label.pack(pady=10)
+
+        # Create a frame for the content
+        content_frame = tk.Frame(self)
+        content_frame.pack(pady=10, padx=20)
+
+        steps = [
+            "If Your Account Is Compromised:",
+            "1. Immediately change your password",
+            "2. Contact platform support services",
+            "3. Enable additional security features",
+            "4. Review recent account activity",
+            "",
+            "Preventive Measures:",
+            "1. Regularly update your passwords",
+            "2. Monitor account login notifications",
+            "3. Keep your email account secure",
+            "4. Save support contact information",
+            "",
+            "Recovery Steps:",
+            "1. Document all unauthorized activities",
+            "2. Report suspicious transactions",
+            "3. Review and revoke third-party access",
+            "4. Scan your device for malware"
         ]
-        for procedure in procedures:
-            tk.Label(self, text=f"• {procedure}").pack(pady=5)
 
+        for step in steps:
+            step_label = tk.Label(content_frame, text=step, wraplength=350, justify="left")
+            step_label.pack(pady=5, anchor="w")
 
-class TwoFactorPage(Page):
-    def __init__(self, parent, user):
-        super().__init__(parent)
-        self.user = user
-        tk.Label(self, text="Enter 2FA Code").pack(pady=20)
-        self.code_entry = tk.Entry(self)
-        self.code_entry.pack(pady=10)
-        tk.Button(self, text="Verify", command=self.verify_code).pack(pady=10)
-
-    def verify_code(self):
-        if self.code_entry.get() == self.user.two_factor_code:
-            self.parent.show_page("CredentialsPage")
-        else:
-            messagebox.showerror("Verification Failed", "Invalid 2FA code")
+        # Back button to credentials page
+        self.back_to_credentials_button_incident = tk.Button(
+            self,
+            text="Back to Credentials",
+            command=lambda: self.parent.show_page("CredentialsPage"),
+        )
+        self.back_to_credentials_button_incident.pack(pady=10)
 
 
 class App(tk.Tk):
-    """Main application class."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -345,12 +529,12 @@ class App(tk.Tk):
         self.geometry("414x896")
         self.logged_in_user = None
 
-        # Initialize core components
+        # Initialise database
         self.db = Database()
         self.user = User(self.db)
         self.credential = Credential(self.db)
 
-        # Create page dictionary
+        # Create frames for each page
         self.pages = {
             "LandingPage": LandingPage(self),
             "CreateAccountPage": CreateAccountPage(self, self.user),
@@ -362,13 +546,14 @@ class App(tk.Tk):
         }
 
     def show_page(self, page_name):
-        """Switches between application pages."""
+    # Hide all pages
         for page in self.pages.values():
             page.grid_remove()
+    # Show the selected page
         self.pages[page_name].grid()
 
 
 if __name__ == "__main__":
     app = App()
-    app.show_page("LandingPage")
-    app.mainloop()
+    app.show_page("LandingPage")  # Show the initial landing page
+    app.mainloop()  # Start the main event loop
