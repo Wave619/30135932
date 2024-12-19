@@ -436,7 +436,9 @@ class LoginPage(Page):
             # Generate and show 2FA code
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo("2FA Code", f"Your verification code is: {two_factor_code}")
-            self.parent.logged_in_user = username
+            encrypted_username = self.user.db.encrypt(username)
+            self.parent.logged_in_user = username  # Store unencrypted for display
+            self.parent.encrypted_username = encrypted_username  # Store encrypted for database operations
             self.parent.show_page("TwoFactorPage")
         else:
             messagebox.showerror("Login Failed", "Invalid username or password.")
@@ -523,7 +525,9 @@ class CredentialsPage(Page):
         twitch = self.twitch_entry.get()
         discord = self.discord_entry.get()
         steam = self.steam_entry.get()
-        self.credential.store_gaming_credentials(self.parent.logged_in_user,
+        
+        encrypted_username = self.credential.db.encrypt(self.parent.logged_in_user)
+        self.credential.store_gaming_credentials(encrypted_username,
                                                  twitch, discord, steam)
 
 
