@@ -186,7 +186,8 @@ class Database:
             result = self.cursor.fetchone()
             if result is not None:
                 stored_password_hash = result[1]
-                return stored_password_hash == password  # Compare hashed passwords
+                hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
+                return stored_password_hash == hashed_input_password  # Compare hashed passwords
             return False
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Failed to verify login: {str(e)}")
