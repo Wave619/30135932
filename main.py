@@ -185,7 +185,8 @@ class Database:
             self.cursor.execute("SELECT * FROM users WHERE username = ?", (encrypted_username,))
             result = self.cursor.fetchone()
             if result is not None:
-                return result[1] == password  # Compare hashed passwords
+                stored_password_hash = result[1]
+                return stored_password_hash == password  # Compare hashed passwords
             return False
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Failed to verify login: {str(e)}")
