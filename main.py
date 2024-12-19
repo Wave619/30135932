@@ -110,8 +110,17 @@ class Database:
         # Initialize database connection and encryption
         self.connection = sqlite3.connect(db_name)
         self.cursor = self.connection.cursor()
-        self.key = Fernet.generate_key()  # Encryption key
-        self.cipher = Fernet(self.key)    # Encryption cipher
+        
+        # Create or load encryption key
+        try:
+            with open('encryption.key', 'rb') as key_file:
+                self.key = key_file.read()
+        except FileNotFoundError:
+            self.key = Fernet.generate_key()
+            with open('encryption.key', 'wb') as key_file:
+                key_file.write(self.key)
+                
+        self.cipher = Fernet(self.key)
         self.create_tables()
 
     def create_tables(self):
