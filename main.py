@@ -1,129 +1,92 @@
-#REMOVE ADMIN ACCESS!!!
-#FORMAT THE CRDENTIALS PAGE CORRECTLY
-#ADD CONTENT TO SAFE COMMUNCATION AND IR PAGE
-#ADD 2FA
-#encrypt CREDENTIALS
-
-import tkinter as tk
-from tkinter import messagebox
-import hashlib
-import re
-import sqlite3
-import os
-import random
-import time
-from cryptography.fernet import Fernet
+import tkinter as tk #GUI framework
+from tkinter import messagebox #for displaying errors
+import hashlib #for password hashing
+import re #for password validation
+import sqlite3 #database managment
+import random #For generating 2FA codes
+from cryptography.fernet import Fernet #for encrypting sensitive data
 
 
-class User:
+class User: #Handles user authentication and account managment
 
     def __init__(self, db):
-        self.db = db
-        self.two_factor_code = None
-        self.login_attempts = {}  # Track attempts per username
-        self.lockout_time = 300  # 5 minutes lockout
+        self.db = db #Database connection
+        self.two_factor_code = None #Stores 2FA code temporarily
 
-    def create_account(self, username, password):
-        """Creates a new user account."""
-        if self.db.is_duplicate(username):
+    def create_account(self, username, password):#Creates a new user account.
+        if self.db.is_duplicate(username): #Checks for duplicated usernames
             messagebox.showerror("Account Creation Failed",
-                                 "Username already in use.")
+                                 "Username already in use.") #Displays error if duplicated
             return
 
-        if not self.evaluate_password(password):
+        if not self.evaluate_password(password): #Evaluates password strength
             messagebox.showerror(
                 "Account Creation Failed",
-                "Your password is invalid. Please follow the instructions to create a stronger password."
-            )
+                "Your password is invalid. Please follow the instructions to create a stronger password.") #Displays error if password is not strong enough
             return
 
-        self.db.store_credentials(username, password)
+        self.db.store_credentials(username, password) #Stores username and password
         return True
 
-    def generate_two_factor_code(self):
-        """Generates a random 4-digit code."""
+    def generate_two_factor_code(self): #Generates a random 4-digit code    
         self.two_factor_code = str(random.randint(1000, 9999))
         return self.two_factor_code
 
-    def evaluate_password(self, password):
-        """Evaluates password strength."""
+    def evaluate_password(self, password): #Evaluates password strength
         if len(password) < 8:
             return False
-        if not re.search(r'[A-Z]', password):
+        if not re.search(r'[A-Z]', password): #Password must have a uppercase letter
             return False
-        if not re.search(r'[a-z]', password):
+        if not re.search(r'[a-z]', password): #Password must have a lowercase letter
             return False
-        if not re.search(r'[0-9]', password):
+        if not re.search(r'[0-9]', password): #Password must have a number
             return False
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password): #Password must have a special charachter
             return False
         return True
 
-    def login(self):
+    def login(self): #handles user log in process
         username = self.username_entry_login.get()
-        current_time = time.time()
-        
-        # Check if user is locked out
-        if username in self.login_attempts:
-            attempts, lockout_timestamp = self.login_attempts[username]
-            if attempts >= 3 and current_time - lockout_timestamp < self.lockout_time:
-                remaining_time = int(self.lockout_time - (current_time - lockout_timestamp))
-                messagebox.showerror("Account Locked", 
-                    f"Too many failed attempts. Please try again in {remaining_time} seconds.")
-                return
-
         password = self.password_entry_login.get()
+
+        # Hash the password to compare it with the stored hashed password
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        # Verify login credentials
+        # Verify login credentials from the database
         if self.db.verify_login(username, hashed_password):
-            # Reset attempts on successful login
-            if username in self.login_attempts:
-                del self.login_attempts[username]
-                
             # Generate and store 2FA code
             two_factor_code = self.generate_two_factor_code()
-            print(f"Your 2FA code is: {two_factor_code}")
+            print(f"Your 2FA code is: {two_factor_code}") 
+
+            # Store the 2FA code in the User object
             self.user.two_factor_code = two_factor_code
+
+            # Show the TwoFactorPage for entering the 2FA code
             self.parent.show_page("TwoFactorPage")
         else:
-            # Track failed attempt
-            if username not in self.login_attempts:
-                self.login_attempts[username] = [1, current_time]
-            else:
-                attempts, _ = self.login_attempts[username]
-                self.login_attempts[username] = [attempts + 1, current_time]
-                
-            remaining_attempts = 3 - self.login_attempts[username][0]
-            if remaining_attempts > 0:
-                messagebox.showerror("Login Failed", 
-                    f"Invalid username or password. {remaining_attempts} attempts remaining.")
-            else:
-                messagebox.showerror("Account Locked", 
-                    f"Too many failed attempts. Account locked for {self.lockout_time} seconds.")
+            messagebox.showerror("Login Failed", "Invalid username or password.") #Displays an error if username or password cannot be found
 
 
 
 
-class Credential:
+class Credential: #Manages gaming platform credentials
 
     def __init__(self, db):
         self.db = db
 
-    def store_gaming_credentials(self, username, twitch, discord, steam):
-        """Stores gaming credentials for the user."""
-        if not twitch and not discord and not steam:
+    def store_gaming_credentials(self, username, twitch, discord, steam):  #Stores gaming credentials for the user
+        if not twitch and not discord and not steam: 
             messagebox.showerror(
                 "Input Error",
-                "Please fill in at least one field for gaming credentials.")
+                "Please fill in at least one field for gaming credentials.") #Displays error if user stores credentials with out any data
             return
 
-        self.db.store_gaming_credentials(username, twitch, discord, steam)
+        self.db.store_gaming_credentials(username, twitch, discord, steam) #Stores credentials
         messagebox.showinfo("Success",
-                            "Gaming credentials stored successfully!")
+                            "Gaming credentials stored successfully!") #Displays a message after succesful input
 
 
-class Database:
+class Database: #Handles database operations
     def __init__(self, db_name="CyberEsportsApp.db"):
         self.connection = sqlite3.connect(db_name)
         self.cursor = self.connection.cursor()
@@ -131,9 +94,7 @@ class Database:
         self.cipher = Fernet(self.key)
         self.create_tables()
 
-    def create_tables(self):
-        """Creates the necessary database tables if they don't exist."""
-        # Create users table
+    def create_tables(self):# Create users table
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY,
@@ -154,21 +115,20 @@ class Database:
 
         self.connection.commit()
 
-    def encrypt(self, data):
+    def encrypt(self, data): #Encrypts data
         return self.cipher.encrypt(data.encode()).decode()
 
-    def decrypt(self, data):
+    def decrypt(self, data): #decrypts data
         return self.cipher.decrypt(data.encode()).decode()
 
-    def verify_login(self, username, password):
-        """Verifies login credentials."""
+    def verify_login(self, username, password): #Verfies log in credentials
         self.cursor.execute(
             "SELECT * FROM users WHERE username = ? AND password_hash = ?",
             (username, password))
         result = self.cursor.fetchone()
         return result is not None
 
-    def store_gaming_credentials(self, username, twitch, discord, steam):
+    def store_gaming_credentials(self, username, twitch, discord, steam): #stores encrypted data
         try:
             if twitch:
                 twitch = self.encrypt(twitch)
@@ -186,18 +146,15 @@ class Database:
             messagebox.showerror("Database Error", f"Failed to store credentials: {str(e)}")
             raise
 
-    def is_duplicate(self, username):
-        """Checks if username already exists."""
+    def is_duplicate(self, username): #Checks if username already exists
         self.cursor.execute("SELECT username FROM users WHERE username = ?", (username,))
         return self.cursor.fetchone() is not None
 
-    def close(self):
-        """Close the database connection."""
+    def close(self): #Close the database connection
         if self.connection:
             self.connection.close()
 
-    def store_credentials(self, username, password):
-        """Stores user credentials."""
+    def store_credentials(self, username, password): #Stores user credentials
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
         self.cursor.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
@@ -207,7 +164,7 @@ class Database:
 
 
 
-class Page(tk.Frame):
+class Page(tk.Frame): #Class for all pages in the application
 
     def __init__(self, parent, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
