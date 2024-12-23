@@ -514,7 +514,13 @@ class CredentialsPage(Page):
         self.store_button = tk.Button(self,
                                       text="Store Credentials",
                                       command=self.store_gaming_credentials)
-        self.store_button.pack(pady=20)
+        self.store_button.pack(pady=10)
+
+        # View credentials button
+        self.view_button = tk.Button(self,
+                                   text="View Stored Credentials",
+                                   command=self.view_credentials)
+        self.view_button.pack(pady=10)
 
         # Navigation frame
         self.nav_frame = tk.Frame(self)
@@ -548,6 +554,11 @@ class CredentialsPage(Page):
         steam = self.steam_entry.get()
         self.credential.store_gaming_credentials(self.parent.logged_in_user,
                                                  twitch, discord, steam)
+
+    def view_credentials(self):
+        """Switch to credentials viewing page"""
+        self.parent.pages["ViewCredentialsPage"].load_credentials()
+        self.parent.show_page("ViewCredentialsPage")
 
 
 class SafeCommunicationPage(Page):
@@ -642,6 +653,72 @@ class IncidentResponsePage(Page):
         self.back_to_credentials_button_incident.pack(pady=10)
 
 
+class ViewCredentialsPage(Page):
+    """Displays stored gaming credentials"""
+    
+    def __init__(self, parent, credential, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.credential = credential
+        
+        # Create title
+        self.view_label = tk.Label(self,
+                                 text="Your Gaming Credentials",
+                                 font=("Arial", 16))
+        self.view_label.pack(pady=10)
+        
+        # Create display frame
+        self.cred_frame = tk.Frame(self)
+        self.cred_frame.pack(pady=10, padx=20)
+        
+        # Labels for displaying credentials
+        self.twitch_label = tk.Label(self.cred_frame, text="Twitch Credentials:")
+        self.twitch_label.pack(pady=5)
+        self.twitch_value = tk.Label(self.cred_frame, text="")
+        self.twitch_value.pack(pady=5)
+        
+        self.discord_label = tk.Label(self.cred_frame, text="Discord Credentials:")
+        self.discord_label.pack(pady=5)
+        self.discord_value = tk.Label(self.cred_frame, text="")
+        self.discord_value.pack(pady=5)
+        
+        self.steam_label = tk.Label(self.cred_frame, text="Steam Credentials:")
+        self.steam_label.pack(pady=5)
+        self.steam_value = tk.Label(self.cred_frame, text="")
+        self.steam_value.pack(pady=5)
+        
+        # Back button
+        self.back_button = tk.Button(
+            self,
+            text="Back to Credentials",
+            command=lambda: self.parent.show_page("CredentialsPage"))
+        self.back_button.pack(pady=10)
+        
+    def load_credentials(self):
+        """Load and display stored credentials"""
+        try:
+            # Get credentials from database
+            self.parent.db.cursor.execute(
+                "SELECT twitch, discord, steam FROM gaming_credentials WHERE username = ?",
+                (self.parent.logged_in_user,))
+            creds = self.parent.db.cursor.fetchone()
+            
+            if creds:
+                # Decrypt and display credentials
+                twitch = self.parent.db.decrypt(creds[0]) if creds[0] else "Not set"
+                discord = self.parent.db.decrypt(creds[1]) if creds[1] else "Not set"
+                steam = self.parent.db.decrypt(creds[2]) if creds[2] else "Not set"
+                
+                self.twitch_value.config(text=twitch)
+                self.discord_value.config(text=discord)
+                self.steam_value.config(text=steam)
+            else:
+                self.twitch_value.config(text="No credentials stored")
+                self.discord_value.config(text="No credentials stored")
+                self.steam_value.config(text="No credentials stored")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load credentials: {str(e)}")
+
 class App(tk.Tk):
     """Main application class"""
 
@@ -665,6 +742,7 @@ class App(tk.Tk):
             "SafeCommunicationPage": SafeCommunicationPage(self),
             "IncidentResponsePage": IncidentResponsePage(self),
             "TwoFactorPage": TwoFactorPage(self, self.user),
+            "ViewCredentialsPage": ViewCredentialsPage(self, self.credential),
         }
 
     def show_page(self, page_name):
