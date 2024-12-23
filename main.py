@@ -671,20 +671,38 @@ class ViewCredentialsPage(Page):
         self.cred_frame.pack(pady=10, padx=20)
         
         # Labels for displaying credentials
-        self.twitch_label = tk.Label(self.cred_frame, text="Twitch Credentials:")
-        self.twitch_label.pack(pady=5)
-        self.twitch_value = tk.Label(self.cred_frame, text="")
-        self.twitch_value.pack(pady=5)
+        self.twitch_header = tk.Label(self.cred_frame, text="Twitch Credentials:", font=("Arial", 12, "bold"))
+        self.twitch_header.pack(pady=5)
+        self.twitch_username_label = tk.Label(self.cred_frame, text="Username:")
+        self.twitch_username_label.pack(pady=2)
+        self.twitch_username_value = tk.Label(self.cred_frame, text="")
+        self.twitch_username_value.pack(pady=2)
+        self.twitch_password_label = tk.Label(self.cred_frame, text="Password:")
+        self.twitch_password_label.pack(pady=2)
+        self.twitch_password_value = tk.Label(self.cred_frame, text="")
+        self.twitch_password_value.pack(pady=5)
         
-        self.discord_label = tk.Label(self.cred_frame, text="Discord Credentials:")
-        self.discord_label.pack(pady=5)
-        self.discord_value = tk.Label(self.cred_frame, text="")
-        self.discord_value.pack(pady=5)
+        self.discord_header = tk.Label(self.cred_frame, text="Discord Credentials:", font=("Arial", 12, "bold"))
+        self.discord_header.pack(pady=5)
+        self.discord_username_label = tk.Label(self.cred_frame, text="Username:")
+        self.discord_username_label.pack(pady=2)
+        self.discord_username_value = tk.Label(self.cred_frame, text="")
+        self.discord_username_value.pack(pady=2)
+        self.discord_password_label = tk.Label(self.cred_frame, text="Password:")
+        self.discord_password_label.pack(pady=2)
+        self.discord_password_value = tk.Label(self.cred_frame, text="")
+        self.discord_password_value.pack(pady=5)
         
-        self.steam_label = tk.Label(self.cred_frame, text="Steam Credentials:")
-        self.steam_label.pack(pady=5)
-        self.steam_value = tk.Label(self.cred_frame, text="")
-        self.steam_value.pack(pady=5)
+        self.steam_header = tk.Label(self.cred_frame, text="Steam Credentials:", font=("Arial", 12, "bold"))
+        self.steam_header.pack(pady=5)
+        self.steam_username_label = tk.Label(self.cred_frame, text="Username:")
+        self.steam_username_label.pack(pady=2)
+        self.steam_username_value = tk.Label(self.cred_frame, text="")
+        self.steam_username_value.pack(pady=2)
+        self.steam_password_label = tk.Label(self.cred_frame, text="Password:")
+        self.steam_password_label.pack(pady=2)
+        self.steam_password_value = tk.Label(self.cred_frame, text="")
+        self.steam_password_value.pack(pady=5)
         
         # Back button
         self.back_button = tk.Button(
@@ -708,13 +726,26 @@ class ViewCredentialsPage(Page):
                 discord = self.parent.db.decrypt(creds[1]) if creds[1] else "Not set"
                 steam = self.parent.db.decrypt(creds[2]) if creds[2] else "Not set"
                 
-                self.twitch_value.config(text=twitch)
-                self.discord_value.config(text=discord)
-                self.steam_value.config(text=steam)
+                # Split credentials into username and password
+                twitch_parts = twitch.split(':') if twitch != "Not set" else ["Not set", "Not set"]
+                discord_parts = discord.split(':') if discord != "Not set" else ["Not set", "Not set"]
+                steam_parts = steam.split(':') if steam != "Not set" else ["Not set", "Not set"]
+                
+                # Update labels
+                self.twitch_username_value.config(text=twitch_parts[0])
+                self.twitch_password_value.config(text=twitch_parts[1])
+                self.discord_username_value.config(text=discord_parts[0])
+                self.discord_password_value.config(text=discord_parts[1])
+                self.steam_username_value.config(text=steam_parts[0])
+                self.steam_password_value.config(text=steam_parts[1])
             else:
-                self.twitch_value.config(text="No credentials stored")
-                self.discord_value.config(text="No credentials stored")
-                self.steam_value.config(text="No credentials stored")
+                # Set "No credentials stored" for all fields
+                self.twitch_username_value.config(text="No credentials stored")
+                self.twitch_password_value.config(text="No credentials stored")
+                self.discord_username_value.config(text="No credentials stored")
+                self.discord_password_value.config(text="No credentials stored")
+                self.steam_username_value.config(text="No credentials stored")
+                self.steam_password_value.config(text="No credentials stored")
                 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load credentials: {str(e)}")
