@@ -70,23 +70,18 @@ class User:
             return False
         return True
 
-    def login(self):
-        """Handles the login process with 2FA"""
-        username = self.username_entry_login.get()
-        password = self.password_entry_login.get()
-
-        # Hash password for comparison
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-
-        # Verify credentials
-        if self.db.verify_login(username, hashed_password):
-            two_factor_code = self.generate_two_factor_code()
-            print(f"Your 2FA code is: {two_factor_code}")
-            self.user.two_factor_code = two_factor_code
-            self.parent.show_page("TwoFactorPage")
-        else:
-            messagebox.showerror("Login Failed",
-                                 "Invalid username or password.")
+    def check_login_attempts(self, username, current_time):
+        """Check if user is locked out and track attempts"""
+        if username in self.login_attempts:
+            attempts, last_attempt_time = self.login_attempts[username]
+            if attempts >= 5:
+                time_diff = current_time - last_attempt_time
+                if time_diff < 120:  # 120 seconds = 2 minutes
+                    return int(120 - time_diff)  # Return remaining lockout time
+                else:
+                    # Reset attempts after lockout period
+                    self.login_attempts[username] = (0, current_time)
+        return 0  # No lockout in effect
 
 
 class Credential:
@@ -473,18 +468,11 @@ class LoginPage(Page):
         
         # Check if user is locked out
         current_time = time.time()
-        if username in self.user.login_attempts:
-            attempts, last_attempt_time = self.user.login_attempts[username]
-            if attempts >= 5:
-                time_diff = current_time - last_attempt_time
-                if time_diff < 120:  # 120 seconds = 2 minutes
-                    remaining_time = int(120 - time_diff)
-                    messagebox.showerror("Account Locked",
-                                       f"Too many failed attempts. Please try again in {remaining_time} seconds.")
-                    return
-                else:
-                    # Reset attempts after lockout period
-                    self.user.login_attempts[username] = (0, current_time)
+        remaining_lockout = self.user.check_login_attempts(username, current_time)
+        if remaining_lockout > 0:
+            messagebox.showerror("Account Locked",
+                               f"Too many failed attempts. Please try again in {remaining_lockout} seconds.")
+            return
 
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
