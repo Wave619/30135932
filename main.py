@@ -347,6 +347,8 @@ class TwoFactorPage(Page):
         entered_code = self.code_entry.get()
         if entered_code == self.user.two_factor_code:
             messagebox.showinfo("Success", "2FA Verified!")
+            # Check for compromised passwords after successful 2FA
+            self.user.db.check_compromised_passwords(self.parent.logged_in_user)
             self.parent.show_page("CredentialsPage")
         else:
             messagebox.showerror("Error", "Invalid 2FA Code")
@@ -469,10 +471,6 @@ class LoginPage(Page):
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         if self.user.db.verify_login(username, hashed_password):
-            # Check for compromised passwords
-            self.user.db.check_compromised_passwords(
-                username)  # New function call
-
             # Proceed with 2FA
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo(
