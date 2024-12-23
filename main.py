@@ -3,6 +3,7 @@ import tkinter as tk  # GUI framework for creating desktop applications
 from tkinter import messagebox  # For displaying popup messages and errors
 import hashlib  # For secure password hashing
 import re  # For regular expression operations in password validation
+import time  # For tracking login attempt timestamps
 import sqlite3  # For database operations
 import random  # For generating random 2FA codes
 from cryptography.fernet import Fernet  # For symmetric encryption of sensitive data
@@ -19,6 +20,7 @@ class User:
     def __init__(self, db):
         self.db = db  # Initialise database connection
         self.two_factor_code = None  # Store temporary 2FA code
+        self.login_attempts = {}  # Track login attempts {username: (attempts, last_attempt_time)}
 
     def create_account(self, username, password):
         """
@@ -465,12 +467,32 @@ class LoginPage(Page):
         self.back_to_landing_button_login.pack(pady=10)
 
     def login(self):
-        """Processes login attempt with 2FA"""
+        """Processes login attempt with 2FA and handles login attempt limiting"""
         username = self.username_entry_login.get()
         password = self.password_entry_login.get()
+        
+        # Check if user is locked out
+        current_time = time.time()
+        if username in self.user.login_attempts:
+            attempts, last_attempt_time = self.user.login_attempts[username]
+            if attempts >= 5:
+                time_diff = current_time - last_attempt_time
+                if time_diff < 120:  # 120 seconds = 2 minutes
+                    remaining_time = int(120 - time_diff)
+                    messagebox.showerror("Account Locked",
+                                       f"Too many failed attempts. Please try again in {remaining_time} seconds.")
+                    return
+                else:
+                    # Reset attempts after lockout period
+                    self.user.login_attempts[username] = (0, current_time)
+
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         if self.user.db.verify_login(username, hashed_password):
+            # Reset login attempts on successful login
+            if username in self.user.login_attempts:
+                del self.user.login_attempts[username]
+                
             # Proceed with 2FA
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo(
@@ -478,8 +500,15 @@ class LoginPage(Page):
             self.parent.logged_in_user = username
             self.parent.show_page("TwoFactorPage")
         else:
+            # Update failed login attempts
+            if username not in self.user.login_attempts:
+                self.user.login_attempts[username] = (1, current_time)
+            else:
+                attempts, _ = self.user.login_attempts[username]
+                self.user.login_attempts[username] = (attempts + 1, current_time)
+            
             messagebox.showerror("Login Failed",
-                                 "Invalid username or password.")
+                               "Invalid username or password.")
 
 
 class CredentialsPage(Page):
