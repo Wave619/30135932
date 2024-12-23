@@ -253,11 +253,11 @@ class Database:
 
             # Check if passwords are compromised
             compromised_services = []
-            if twitch and twitch in compromised_data.get("twitch", []):
+            if twitch and twitch in compromised_data:
                 compromised_services.append("Twitch")
-            if discord and discord in compromised_data.get("discord", []):
+            if discord and discord in compromised_data:
                 compromised_services.append("Discord")
-            if steam and steam in compromised_data.get("steam", []):
+            if steam and steam in compromised_data:
                 compromised_services.append("Steam")
 
             # Show alert if any passwords are compromised
