@@ -748,14 +748,16 @@ class ViewCredentialsPage(Page):
                     twitch_parts = twitch.split(':') if twitch != "Not set" and ':' in twitch else ["Not set", "Not set"]
                     discord_parts = discord.split(':') if discord != "Not set" and ':' in discord else ["Not set", "Not set"]
                     steam_parts = steam.split(':') if steam != "Not set" and ':' in steam else ["Not set", "Not set"]
-                
-                # Update labels
-                self.twitch_username_value.config(text=twitch_parts[0])
-                self.twitch_password_value.config(text=twitch_parts[1])
-                self.discord_username_value.config(text=discord_parts[0])
-                self.discord_password_value.config(text=discord_parts[1])
-                self.steam_username_value.config(text=steam_parts[0])
-                self.steam_password_value.config(text=steam_parts[1])
+                    
+                    # Update labels
+                    self.twitch_username_value.config(text=twitch_parts[0])
+                    self.twitch_password_value.config(text=twitch_parts[1])
+                    self.discord_username_value.config(text=discord_parts[0])
+                    self.discord_password_value.config(text=discord_parts[1])
+                    self.steam_username_value.config(text=steam_parts[0])
+                    self.steam_password_value.config(text=steam_parts[1])
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to decrypt credentials: {str(e)}")
             else:
                 # Set "No credentials stored" for all fields
                 self.twitch_username_value.config(text="No credentials stored")
