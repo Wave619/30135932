@@ -112,8 +112,27 @@ class Database:
     def __init__(self, db_name="CyberEsportsApp.db"):
         self.connection = sqlite3.connect(db_name)
         self.cursor = self.connection.cursor()
-        self.key = Fernet.generate_key()  # Generate encryption key
-        self.cipher = Fernet(self.key)  # Initialize encryption cipher
+        
+        # Create key table if it doesn't exist
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS encryption_key (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                key BLOB NOT NULL
+            )
+        ''')
+        
+        # Get or create encryption key
+        self.cursor.execute("SELECT key FROM encryption_key WHERE id = 1")
+        key_row = self.cursor.fetchone()
+        
+        if key_row is None:
+            self.key = Fernet.generate_key()
+            self.cursor.execute("INSERT INTO encryption_key (id, key) VALUES (1, ?)", (self.key,))
+            self.connection.commit()
+        else:
+            self.key = key_row[0]
+            
+        self.cipher = Fernet(self.key)
         self.create_tables()
 
     def create_tables(self):
