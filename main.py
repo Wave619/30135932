@@ -738,15 +738,16 @@ class ViewCredentialsPage(Page):
             creds = self.parent.db.cursor.fetchone()
             
             if creds:
-                # Decrypt and display credentials
-                twitch = self.parent.db.decrypt(creds[0]) if creds[0] else "Not set"
-                discord = self.parent.db.decrypt(creds[1]) if creds[1] else "Not set"
-                steam = self.parent.db.decrypt(creds[2]) if creds[2] else "Not set"
-                
-                # Split credentials into username and password
-                twitch_parts = twitch.split(':') if twitch != "Not set" else ["Not set", "Not set"]
-                discord_parts = discord.split(':') if discord != "Not set" else ["Not set", "Not set"]
-                steam_parts = steam.split(':') if steam != "Not set" else ["Not set", "Not set"]
+                try:
+                    # Decrypt and display credentials
+                    twitch = self.parent.db.decrypt(creds[0]) if creds[0] else "Not set"
+                    discord = self.parent.db.decrypt(creds[1]) if creds[1] else "Not set" 
+                    steam = self.parent.db.decrypt(creds[2]) if creds[2] else "Not set"
+
+                    # Split credentials into username and password with error handling
+                    twitch_parts = twitch.split(':') if twitch != "Not set" and ':' in twitch else ["Not set", "Not set"]
+                    discord_parts = discord.split(':') if discord != "Not set" and ':' in discord else ["Not set", "Not set"]
+                    steam_parts = steam.split(':') if steam != "Not set" and ':' in steam else ["Not set", "Not set"]
                 
                 # Update labels
                 self.twitch_username_value.config(text=twitch_parts[0])
