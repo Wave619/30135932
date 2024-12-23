@@ -503,12 +503,18 @@ class LoginPage(Page):
             # Update failed login attempts
             if username not in self.user.login_attempts:
                 self.user.login_attempts[username] = (1, current_time)
+                messagebox.showerror("Login Failed", "Invalid username or password.")
             else:
                 attempts, _ = self.user.login_attempts[username]
-                self.user.login_attempts[username] = (attempts + 1, current_time)
-            
-            messagebox.showerror("Login Failed",
-                               "Invalid username or password.")
+                new_attempts = attempts + 1
+                self.user.login_attempts[username] = (new_attempts, current_time)
+                
+                if new_attempts == 4:
+                    messagebox.showerror("Login Failed", "Invalid username or password. 1 attempt remaining before lockout.")
+                elif new_attempts == 3:
+                    messagebox.showerror("Login Failed", "Invalid username or password. 2 attempts remaining before lockout.")
+                else:
+                    messagebox.showerror("Login Failed", "Invalid username or password.")
 
 
 class CredentialsPage(Page):
