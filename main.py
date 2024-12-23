@@ -130,7 +130,7 @@ class Database:
             self.cursor.execute("INSERT INTO encryption_key (id, key) VALUES (1, ?)", (self.key,))
             self.connection.commit()
         else:
-            self.key = key_row[0]
+            self.key = bytes(key_row[0])
             
         self.cipher = Fernet(self.key)
         self.create_tables()
