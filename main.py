@@ -17,7 +17,7 @@ class User:
     """
 
     def __init__(self, db):
-        self.db = db  # Initialize database connection
+        self.db = db  # Initialise database connection
         self.two_factor_code = None  # Store temporary 2FA code
 
     def create_account(self, username, password):
@@ -229,8 +229,7 @@ class Database:
                 return
 
             # Decrypt stored credentials
-            print(f"Credentials: {credentials}, Types: {[type(c) for c in credentials]}")
-
+            
             try:
                 twitch = self.decrypt(credentials[0]) if credentials[0] else None
             except Exception as e:
