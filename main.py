@@ -481,34 +481,34 @@ class CredentialsPage(Page):
         self.credentials_label.pack(pady=10)
 
         # Twitch credentials input
-        self.twitch_label = tk.Label(self, text="Twitch Username:")
-        self.twitch_label.pack(pady=5)
-        self.twitch_entry = tk.Entry(self)
-        self.twitch_entry.pack(pady=5)
-        self.twitch_label = tk.Label(self, text="Twitch Password:")
-        self.twitch_label.pack(pady=5)
-        self.twitch_entry = tk.Entry(self, show="*")
-        self.twitch_entry.pack(pady=5)
+        self.twitch_username_label = tk.Label(self, text="Twitch Username:")
+        self.twitch_username_label.pack(pady=5)
+        self.twitch_username_entry = tk.Entry(self)
+        self.twitch_username_entry.pack(pady=5)
+        self.twitch_password_label = tk.Label(self, text="Twitch Password:")
+        self.twitch_password_label.pack(pady=5)
+        self.twitch_password_entry = tk.Entry(self, show="*")
+        self.twitch_password_entry.pack(pady=5)
 
         # Discord credentials input
-        self.discord_label = tk.Label(self, text="Discord Username:")
-        self.discord_label.pack(pady=5)
-        self.discord_entry = tk.Entry(self)
-        self.discord_entry.pack(pady=5)
-        self.discord_label = tk.Label(self, text="Discord Password:")
-        self.discord_label.pack(pady=5)
-        self.discord_entry = tk.Entry(self, show="*")
-        self.discord_entry.pack(pady=5)
+        self.discord_username_label = tk.Label(self, text="Discord Username:")
+        self.discord_username_label.pack(pady=5)
+        self.discord_username_entry = tk.Entry(self)
+        self.discord_username_entry.pack(pady=5)
+        self.discord_password_label = tk.Label(self, text="Discord Password:")
+        self.discord_password_label.pack(pady=5)
+        self.discord_password_entry = tk.Entry(self, show="*")
+        self.discord_password_entry.pack(pady=5)
 
         # Steam credentials input
-        self.steam_label = tk.Label(self, text="Steam Username:")
-        self.steam_label.pack(pady=5)
-        self.steam_entry = tk.Entry(self)
-        self.steam_entry.pack(pady=5)
-        self.steam_label = tk.Label(self, text="Steam Password:")
-        self.steam_label.pack(pady=5)
-        self.steam_entry = tk.Entry(self, show="*")
-        self.steam_entry.pack(pady=5)
+        self.steam_username_label = tk.Label(self, text="Steam Username:")
+        self.steam_username_label.pack(pady=5)
+        self.steam_username_entry = tk.Entry(self)
+        self.steam_username_entry.pack(pady=5)
+        self.steam_password_label = tk.Label(self, text="Steam Password:")
+        self.steam_password_label.pack(pady=5)
+        self.steam_password_entry = tk.Entry(self, show="*")
+        self.steam_password_entry.pack(pady=5)
 
         # Store credentials button
         self.store_button = tk.Button(self,
@@ -549,9 +549,9 @@ class CredentialsPage(Page):
 
     def store_gaming_credentials(self):
         """Stores encrypted gaming credentials"""
-        twitch = self.twitch_entry.get()
-        discord = self.discord_entry.get()
-        steam = self.steam_entry.get()
+        twitch = f"{self.twitch_username_entry.get()}:{self.twitch_password_entry.get()}"
+        discord = f"{self.discord_username_entry.get()}:{self.discord_password_entry.get()}"
+        steam = f"{self.steam_username_entry.get()}:{self.steam_password_entry.get()}"
         self.credential.store_gaming_credentials(self.parent.logged_in_user,
                                                  twitch, discord, steam)
 
