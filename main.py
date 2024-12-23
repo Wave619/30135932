@@ -470,8 +470,35 @@ class LoginPage(Page):
         current_time = time.time()
         remaining_lockout = self.user.check_login_attempts(username, current_time)
         if remaining_lockout > 0:
-            messagebox.showerror("Account Locked",
-                               f"Too many failed attempts. Please try again in {remaining_lockout} seconds.")
+            # Create lockout window
+            lockout_window = tk.Toplevel(self)
+            lockout_window.title("Account Locked")
+            lockout_window.geometry("300x150")
+            
+            # Create labels
+            lock_label = tk.Label(lockout_window, 
+                                text="Too many failed attempts.\nAccount is temporarily locked.",
+                                font=("Arial", 12))
+            lock_label.pack(pady=10)
+            
+            time_label = tk.Label(lockout_window, 
+                                text=f"Time remaining: {remaining_lockout} seconds",
+                                font=("Arial", 12))
+            time_label.pack(pady=10)
+            
+            # Update countdown timer
+            def update_timer():
+                nonlocal remaining_lockout
+                remaining_lockout -= 1
+                time_label.config(text=f"Time remaining: {remaining_lockout} seconds")
+                
+                if remaining_lockout > 0:
+                    lockout_window.after(1000, update_timer)
+                else:
+                    lockout_window.destroy()
+            
+            # Start countdown
+            lockout_window.after(1000, update_timer)
             return
 
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
