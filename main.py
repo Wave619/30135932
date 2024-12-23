@@ -252,18 +252,29 @@ class Database:
 
             # Check if passwords are compromised
             compromised_services = []
-            if twitch:
-                twitch_password = twitch.split(':')[1]
-                if twitch_password in compromised_data:
-                    compromised_services.append("Twitch")
-            if discord:
-                discord_password = discord.split(':')[1]
-                if discord_password in compromised_data:
-                    compromised_services.append("Discord")
-            if steam:
-                steam_password = steam.split(':')[1]
-                if steam_password in compromised_data:
-                    compromised_services.append("Steam")
+            if twitch and ':' in twitch:
+                try:
+                    twitch_password = twitch.split(':')[1]
+                    if twitch_password in compromised_data:
+                        compromised_services.append("Twitch")
+                except IndexError:
+                    print("Malformed Twitch credentials")
+                    
+            if discord and ':' in discord:
+                try:
+                    discord_password = discord.split(':')[1]
+                    if discord_password in compromised_data:
+                        compromised_services.append("Discord")
+                except IndexError:
+                    print("Malformed Discord credentials")
+                    
+            if steam and ':' in steam:
+                try:
+                    steam_password = steam.split(':')[1]
+                    if steam_password in compromised_data:
+                        compromised_services.append("Steam")
+                except IndexError:
+                    print("Malformed Steam credentials")
 
             # Show alert if any passwords are compromised
             if compromised_services:
