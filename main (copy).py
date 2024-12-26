@@ -9,7 +9,6 @@ import random  # For generating random 2FA codes
 from cryptography.fernet import Fernet  # For symmetric encryption of sensitive data
 import json  # For handling JSON files
 import base64  # Import base64 for decoding
-import string # For the random password generator
 
 
 class User:
@@ -104,14 +103,6 @@ class Credential:
         self.db.store_gaming_credentials(username, twitch, discord, steam)
         messagebox.showinfo("Success",
                             "Gaming credentials stored successfully!")
-        
-    def generate_strong_password(self):
-        """Generates a strong random password."""
-        length = 13
-        characters = string.ascii_letters + string.digits + string.punctuation
-        password = ''.join(random.choice(characters) for i in range(length))
-        return password
-
 
 
 class Database:
@@ -586,22 +577,6 @@ class CredentialsPage(Page):
         self.steam_password_entry = tk.Entry(self, show="*")
         self.steam_password_entry.pack(pady=5)
 
-    
-        #Make random password button
-        self.generate_password_button = tk.Button(
-            self,
-            text="Create A Random Password",
-            command=self.generate_password_popup
-        )
-        self.generate_password_button.pack(pady=10)
-
-    def generate_password_popup(self):
-        """Displays a popup with a randomly generated password."""
-        password = self.credential.generate_strong_password()
-        messagebox.showinfo("Generated Password", f"Your strong password: {password}")
-
-
-        
         # Store credentials button
         self.store_button = tk.Button(self,
                                       text="Store Credentials",

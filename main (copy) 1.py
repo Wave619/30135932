@@ -3,11 +3,13 @@ import tkinter as tk  # GUI framework for creating desktop applications
 from tkinter import messagebox  # For displaying popup messages and errors
 import hashlib  # For secure password hashing
 import re  # For regular expression operations in password validation
+import time  # For tracking login attempt timestamps
 import sqlite3  # For database operations
 import random  # For generating random 2FA codes
 from cryptography.fernet import Fernet  # For symmetric encryption of sensitive data
 import json  # For handling JSON files
 import base64  # Import base64 for decoding
+import string # For the random password generator
 
 
 class User:
@@ -19,6 +21,7 @@ class User:
     def __init__(self, db):
         self.db = db  # Initialise database connection
         self.two_factor_code = None  # Store temporary 2FA code
+        self.login_attempts = {}  # Track login attempts {username: (attempts, last_attempt_time)}
 
     def create_account(self, username, password):
         """
@@ -68,23 +71,20 @@ class User:
             return False
         return True
 
-    def login(self):
-        """Handles the login process with 2FA"""
-        username = self.username_entry_login.get()
-        password = self.password_entry_login.get()
+    def check_login_attempts(self, username, current_time):
+        """Check if user is locked out and track attempts"""
+        if username in self.login_attempts:
+            attempts, last_attempt_time = self.login_attempts[username]
+            if attempts >= 5:
+                time_diff = current_time - last_attempt_time
+                if time_diff < 120:  # 120 seconds = 2 minutes
+                    return int(120 - time_diff)  # Return remaining lockout time
+                else:
+                    # Reset attempts after lockout period
+                    self.login_attempts[username] = (0, current_time)
+        return 0  # No lockout in effect
 
-        # Hash password for comparison
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        # Verify credentials
-        if self.db.verify_login(username, hashed_password):
-            two_factor_code = self.generate_two_factor_code()
-            print(f"Your 2FA code is: {two_factor_code}")
-            self.user.two_factor_code = two_factor_code
-            self.parent.show_page("TwoFactorPage")
-        else:
-            messagebox.showerror("Login Failed",
-                                 "Invalid username or password.")
 
 
 class Credential:
@@ -104,6 +104,14 @@ class Credential:
         self.db.store_gaming_credentials(username, twitch, discord, steam)
         messagebox.showinfo("Success",
                             "Gaming credentials stored successfully!")
+        
+    def generate_strong_password(self):
+        """Generates a strong random password."""
+        length = 13
+        characters = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(random.choice(characters) for i in range(length))
+        return password
+
 
 
 class Database:
@@ -252,12 +260,29 @@ class Database:
 
             # Check if passwords are compromised
             compromised_services = []
-            if twitch and twitch in compromised_data:
-                compromised_services.append("Twitch")
-            if discord and discord in compromised_data:
-                compromised_services.append("Discord")
-            if steam and steam in compromised_data:
-                compromised_services.append("Steam")
+            if twitch and ':' in twitch:
+                try:
+                    twitch_password = twitch.split(':')[1]
+                    if twitch_password in compromised_data:
+                        compromised_services.append("Twitch")
+                except IndexError:
+                    print("Malformed Twitch credentials")
+                    
+            if discord and ':' in discord:
+                try:
+                    discord_password = discord.split(':')[1]
+                    if discord_password in compromised_data:
+                        compromised_services.append("Discord")
+                except IndexError:
+                    print("Malformed Discord credentials")
+                    
+            if steam and ':' in steam:
+                try:
+                    steam_password = steam.split(':')[1]
+                    if steam_password in compromised_data:
+                        compromised_services.append("Steam")
+                except IndexError:
+                    print("Malformed Steam credentials")
 
             # Show alert if any passwords are compromised
             if compromised_services:
@@ -330,6 +355,8 @@ class TwoFactorPage(Page):
         entered_code = self.code_entry.get()
         if entered_code == self.user.two_factor_code:
             messagebox.showinfo("Success", "2FA Verified!")
+            # Check for compromised passwords after successful 2FA
+            self.user.db.check_compromised_passwords(self.parent.logged_in_user)
             self.parent.show_page("CredentialsPage")
         else:
             messagebox.showerror("Error", "Invalid 2FA Code")
@@ -446,16 +473,52 @@ class LoginPage(Page):
         self.back_to_landing_button_login.pack(pady=10)
 
     def login(self):
-        """Processes login attempt with 2FA"""
+        """Processes login attempt with 2FA and handles login attempt limiting"""
         username = self.username_entry_login.get()
         password = self.password_entry_login.get()
+        
+        # Check if user is locked out
+        current_time = time.time()
+        remaining_lockout = self.user.check_login_attempts(username, current_time)
+        if remaining_lockout > 0:
+            # Create lockout window
+            lockout_window = tk.Toplevel(self)
+            lockout_window.title("Account Locked")
+            lockout_window.geometry("300x150")
+            
+            # Create labels
+            lock_label = tk.Label(lockout_window, 
+                                text="Too many failed attempts.\nAccount is temporarily locked.",
+                                font=("Arial", 12))
+            lock_label.pack(pady=10)
+            
+            time_label = tk.Label(lockout_window, 
+                                text=f"Time remaining: {remaining_lockout} seconds",
+                                font=("Arial", 12))
+            time_label.pack(pady=10)
+            
+            # Update countdown timer
+            def update_timer():
+                nonlocal remaining_lockout
+                remaining_lockout -= 1
+                time_label.config(text=f"Time remaining: {remaining_lockout} seconds")
+                
+                if remaining_lockout > 0:
+                    lockout_window.after(1000, update_timer)
+                else:
+                    lockout_window.destroy()
+            
+            # Start countdown
+            lockout_window.after(1000, update_timer)
+            return
+
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
         if self.user.db.verify_login(username, hashed_password):
-            # Check for compromised passwords
-            self.user.db.check_compromised_passwords(
-                username)  # New function call
-
+            # Reset login attempts on successful login
+            if username in self.user.login_attempts:
+                del self.user.login_attempts[username]
+                
             # Proceed with 2FA
             two_factor_code = self.user.generate_two_factor_code()
             messagebox.showinfo(
@@ -463,8 +526,21 @@ class LoginPage(Page):
             self.parent.logged_in_user = username
             self.parent.show_page("TwoFactorPage")
         else:
-            messagebox.showerror("Login Failed",
-                                 "Invalid username or password.")
+            # Update failed login attempts
+            if username not in self.user.login_attempts:
+                self.user.login_attempts[username] = (1, current_time)
+                messagebox.showerror("Login Failed", "Invalid username or password.")
+            else:
+                attempts, _ = self.user.login_attempts[username]
+                new_attempts = attempts + 1
+                self.user.login_attempts[username] = (new_attempts, current_time)
+                
+                if new_attempts == 4:
+                    messagebox.showerror("Login Failed", "Invalid username or password. 1 attempt remaining before lockout.")
+                elif new_attempts == 3:
+                    messagebox.showerror("Login Failed", "Invalid username or password. 2 attempts remaining before lockout.")
+                else:
+                    messagebox.showerror("Login Failed", "Invalid username or password.")
 
 
 class CredentialsPage(Page):
@@ -481,40 +557,62 @@ class CredentialsPage(Page):
         self.credentials_label.pack(pady=10)
 
         # Twitch credentials input
-        self.twitch_label = tk.Label(self, text="Twitch Username:")
-        self.twitch_label.pack(pady=5)
-        self.twitch_entry = tk.Entry(self)
-        self.twitch_entry.pack(pady=5)
-        self.twitch_label = tk.Label(self, text="Twitch Password:")
-        self.twitch_label.pack(pady=5)
-        self.twitch_entry = tk.Entry(self, show="*")
-        self.twitch_entry.pack(pady=5)
+        self.twitch_username_label = tk.Label(self, text="Twitch Username:")
+        self.twitch_username_label.pack(pady=5)
+        self.twitch_username_entry = tk.Entry(self)
+        self.twitch_username_entry.pack(pady=5)
+        self.twitch_password_label = tk.Label(self, text="Twitch Password:")
+        self.twitch_password_label.pack(pady=5)
+        self.twitch_password_entry = tk.Entry(self, show="*")
+        self.twitch_password_entry.pack(pady=5)
 
         # Discord credentials input
-        self.discord_label = tk.Label(self, text="Discord Username:")
-        self.discord_label.pack(pady=5)
-        self.discord_entry = tk.Entry(self)
-        self.discord_entry.pack(pady=5)
-        self.discord_label = tk.Label(self, text="Discord Password:")
-        self.discord_label.pack(pady=5)
-        self.discord_entry = tk.Entry(self, show="*")
-        self.discord_entry.pack(pady=5)
+        self.discord_username_label = tk.Label(self, text="Discord Username:")
+        self.discord_username_label.pack(pady=5)
+        self.discord_username_entry = tk.Entry(self)
+        self.discord_username_entry.pack(pady=5)
+        self.discord_password_label = tk.Label(self, text="Discord Password:")
+        self.discord_password_label.pack(pady=5)
+        self.discord_password_entry = tk.Entry(self, show="*")
+        self.discord_password_entry.pack(pady=5)
 
         # Steam credentials input
-        self.steam_label = tk.Label(self, text="Steam Username:")
-        self.steam_label.pack(pady=5)
-        self.steam_entry = tk.Entry(self)
-        self.steam_entry.pack(pady=5)
-        self.steam_label = tk.Label(self, text="Steam Password:")
-        self.steam_label.pack(pady=5)
-        self.steam_entry = tk.Entry(self, show="*")
-        self.steam_entry.pack(pady=5)
+        self.steam_username_label = tk.Label(self, text="Steam Username:")
+        self.steam_username_label.pack(pady=5)
+        self.steam_username_entry = tk.Entry(self)
+        self.steam_username_entry.pack(pady=5)
+        self.steam_password_label = tk.Label(self, text="Steam Password:")
+        self.steam_password_label.pack(pady=5)
+        self.steam_password_entry = tk.Entry(self, show="*")
+        self.steam_password_entry.pack(pady=5)
 
+    
+        #Make random password button
+        self.generate_password_button = tk.Button(
+            self,
+            text="Create A Random Password",
+            command=self.generate_password_popup
+        )
+        self.generate_password_button.pack(pady=10)
+
+    def generate_password_popup(self):
+        """Displays a popup with a randomly generated password."""
+        password = self.credential.generate_strong_password()
+        messagebox.showinfo("Generated Password", f"Your strong password: {password}")
+
+
+        
         # Store credentials button
         self.store_button = tk.Button(self,
                                       text="Store Credentials",
                                       command=self.store_gaming_credentials)
-        self.store_button.pack(pady=20)
+        self.store_button.pack(pady=10)
+
+        # View credentials button
+        self.view_button = tk.Button(self,
+                                   text="View Stored Credentials",
+                                   command=self.view_credentials)
+        self.view_button.pack(pady=10)
 
         # Navigation frame
         self.nav_frame = tk.Frame(self)
@@ -543,11 +641,16 @@ class CredentialsPage(Page):
 
     def store_gaming_credentials(self):
         """Stores encrypted gaming credentials"""
-        twitch = self.twitch_entry.get()
-        discord = self.discord_entry.get()
-        steam = self.steam_entry.get()
+        twitch = f"{self.twitch_username_entry.get()}:{self.twitch_password_entry.get()}"
+        discord = f"{self.discord_username_entry.get()}:{self.discord_password_entry.get()}"
+        steam = f"{self.steam_username_entry.get()}:{self.steam_password_entry.get()}"
         self.credential.store_gaming_credentials(self.parent.logged_in_user,
                                                  twitch, discord, steam)
+
+    def view_credentials(self):
+        """Switch to credentials viewing page"""
+        self.parent.pages["ViewCredentialsPage"].load_credentials()
+        self.parent.show_page("ViewCredentialsPage")
 
 
 class SafeCommunicationPage(Page):
@@ -642,6 +745,106 @@ class IncidentResponsePage(Page):
         self.back_to_credentials_button_incident.pack(pady=10)
 
 
+class ViewCredentialsPage(Page):
+    """Displays stored gaming credentials"""
+    
+    def __init__(self, parent, credential, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.credential = credential
+        
+        # Create title
+        self.view_label = tk.Label(self,
+                                 text="Your Gaming Credentials",
+                                 font=("Arial", 16))
+        self.view_label.pack(pady=10)
+        
+        # Create display frame
+        self.cred_frame = tk.Frame(self)
+        self.cred_frame.pack(pady=10, padx=20)
+        
+        # Labels for displaying credentials
+        self.twitch_header = tk.Label(self.cred_frame, text="Twitch Credentials:", font=("Arial", 12, "bold"))
+        self.twitch_header.pack(pady=5)
+        self.twitch_username_label = tk.Label(self.cred_frame, text="Username:")
+        self.twitch_username_label.pack(pady=2)
+        self.twitch_username_value = tk.Label(self.cred_frame, text="")
+        self.twitch_username_value.pack(pady=2)
+        self.twitch_password_label = tk.Label(self.cred_frame, text="Password:")
+        self.twitch_password_label.pack(pady=2)
+        self.twitch_password_value = tk.Label(self.cred_frame, text="")
+        self.twitch_password_value.pack(pady=5)
+        
+        self.discord_header = tk.Label(self.cred_frame, text="Discord Credentials:", font=("Arial", 12, "bold"))
+        self.discord_header.pack(pady=5)
+        self.discord_username_label = tk.Label(self.cred_frame, text="Username:")
+        self.discord_username_label.pack(pady=2)
+        self.discord_username_value = tk.Label(self.cred_frame, text="")
+        self.discord_username_value.pack(pady=2)
+        self.discord_password_label = tk.Label(self.cred_frame, text="Password:")
+        self.discord_password_label.pack(pady=2)
+        self.discord_password_value = tk.Label(self.cred_frame, text="")
+        self.discord_password_value.pack(pady=5)
+        
+        self.steam_header = tk.Label(self.cred_frame, text="Steam Credentials:", font=("Arial", 12, "bold"))
+        self.steam_header.pack(pady=5)
+        self.steam_username_label = tk.Label(self.cred_frame, text="Username:")
+        self.steam_username_label.pack(pady=2)
+        self.steam_username_value = tk.Label(self.cred_frame, text="")
+        self.steam_username_value.pack(pady=2)
+        self.steam_password_label = tk.Label(self.cred_frame, text="Password:")
+        self.steam_password_label.pack(pady=2)
+        self.steam_password_value = tk.Label(self.cred_frame, text="")
+        self.steam_password_value.pack(pady=5)
+        
+        # Back button
+        self.back_button = tk.Button(
+            self,
+            text="Back to Credentials",
+            command=lambda: self.parent.show_page("CredentialsPage"))
+        self.back_button.pack(pady=10)
+        
+    def load_credentials(self):
+        """Load and display stored credentials"""
+        try:
+            # Get credentials from database
+            self.parent.db.cursor.execute(
+                "SELECT twitch, discord, steam FROM gaming_credentials WHERE username = ?",
+                (self.parent.logged_in_user,))
+            creds = self.parent.db.cursor.fetchone()
+            
+            if creds:
+                try:
+                    # Decrypt and display credentials
+                    twitch = self.parent.db.decrypt(creds[0]) if creds[0] else "Not set"
+                    discord = self.parent.db.decrypt(creds[1]) if creds[1] else "Not set" 
+                    steam = self.parent.db.decrypt(creds[2]) if creds[2] else "Not set"
+
+                    # Split credentials into username and password with error handling
+                    twitch_parts = twitch.split(':') if twitch != "Not set" and ':' in twitch else ["Not set", "Not set"]
+                    discord_parts = discord.split(':') if discord != "Not set" and ':' in discord else ["Not set", "Not set"]
+                    steam_parts = steam.split(':') if steam != "Not set" and ':' in steam else ["Not set", "Not set"]
+                    
+                    # Update labels
+                    self.twitch_username_value.config(text=twitch_parts[0])
+                    self.twitch_password_value.config(text=twitch_parts[1])
+                    self.discord_username_value.config(text=discord_parts[0])
+                    self.discord_password_value.config(text=discord_parts[1])
+                    self.steam_username_value.config(text=steam_parts[0])
+                    self.steam_password_value.config(text=steam_parts[1])
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to decrypt credentials: {str(e)}")
+            else:
+                # Set "No credentials stored" for all fields
+                self.twitch_username_value.config(text="No credentials stored")
+                self.twitch_password_value.config(text="No credentials stored")
+                self.discord_username_value.config(text="No credentials stored")
+                self.discord_password_value.config(text="No credentials stored")
+                self.steam_username_value.config(text="No credentials stored")
+                self.steam_password_value.config(text="No credentials stored")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load credentials: {str(e)}")
+
 class App(tk.Tk):
     """Main application class"""
 
@@ -665,6 +868,7 @@ class App(tk.Tk):
             "SafeCommunicationPage": SafeCommunicationPage(self),
             "IncidentResponsePage": IncidentResponsePage(self),
             "TwoFactorPage": TwoFactorPage(self, self.user),
+            "ViewCredentialsPage": ViewCredentialsPage(self, self.credential),
         }
 
     def show_page(self, page_name):
