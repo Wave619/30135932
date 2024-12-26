@@ -95,10 +95,13 @@ class Credential:
 
     def store_gaming_credentials(self, username, twitch, discord, steam):
         """Stores encrypted gaming platform credentials"""
-        if not twitch and not discord and not steam:
+        # Check if at least one credential pair is complete
+        if (not (twitch.split(':')[0] and twitch.split(':')[1]) and 
+            not (discord.split(':')[0] and discord.split(':')[1]) and 
+            not (steam.split(':')[0] and steam.split(':')[1])):
             messagebox.showerror(
                 "Input Error",
-                "Please fill in at least one field for gaming credentials.")
+                "Please fill in both username and password for at least one service.")
             return
 
         self.db.store_gaming_credentials(username, twitch, discord, steam)
