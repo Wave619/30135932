@@ -595,47 +595,47 @@ class CredentialsPage(Page):
         )
         self.generate_password_button.pack(pady=10)
 
+        # Store credentials button
+        self.store_button = tk.Button(self,
+                                      text="Store Credentials",
+                                      command=self.store_gaming_credentials)
+        self.store_button.pack(pady=10)
+
+        # View credentials button
+        self.view_button = tk.Button(self,
+                                   text="View Stored Credentials",
+                                   command=self.view_credentials)
+        self.view_button.pack(pady=10)
+
+        # Navigation frame
+        self.nav_frame = tk.Frame(self)
+        self.nav_frame.pack(pady=10)
+
+        # Navigation buttons
+        self.safe_communication_button = tk.Button(
+            self.nav_frame,
+            text="Safe Communication Practices",
+            command=lambda: self.parent.show_page("SafeCommunicationPage"),
+        )
+        self.safe_communication_button.pack(side="left", padx=5)
+
+        self.incident_response_button = tk.Button(
+            self.nav_frame,
+            text="Incident Response",
+            command=lambda: self.parent.show_page("IncidentResponsePage"),
+        )
+        self.incident_response_button.pack(side="left", padx=5)
+
+        self.logout_button = tk.Button(
+            self.nav_frame,
+            text="Logout",
+            command=lambda: self.parent.show_page("LandingPage"))
+        self.logout_button.pack(side="left", padx=5)
+
     def generate_password_popup(self):
         """Displays a popup with a randomly generated password."""
         password = self.credential.generate_strong_password()
         messagebox.showinfo("Generated Password", f"Your strong password: {password}")
-
-    # Store credentials button
-    self.store_button = tk.Button(self,
-                                  text="Store Credentials",
-                                  command=self.store_gaming_credentials)
-    self.store_button.pack(pady=10)
-
-    # View credentials button
-    self.view_button = tk.Button(self,
-                               text="View Stored Credentials",
-                               command=self.view_credentials)
-    self.view_button.pack(pady=10)
-
-    # Navigation frame
-    self.nav_frame = tk.Frame(self)
-    self.nav_frame.pack(pady=10)
-
-    # Navigation buttons
-    self.safe_communication_button = tk.Button(
-        self.nav_frame,
-        text="Safe Communication Practices",
-        command=lambda: self.parent.show_page("SafeCommunicationPage"),
-    )
-    self.safe_communication_button.pack(side="left", padx=5)
-
-    self.incident_response_button = tk.Button(
-        self.nav_frame,
-        text="Incident Response",
-        command=lambda: self.parent.show_page("IncidentResponsePage"),
-    )
-    self.incident_response_button.pack(side="left", padx=5)
-
-    self.logout_button = tk.Button(
-        self.nav_frame,
-        text="Logout",
-        command=lambda: self.parent.show_page("LandingPage"))
-    self.logout_button.pack(side="left", padx=5)
 
     def store_gaming_credentials(self):
         """Stores encrypted gaming credentials"""
