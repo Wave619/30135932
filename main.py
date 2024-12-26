@@ -147,8 +147,7 @@ class Database:
         self.create_tables()
 
     def create_tables(self):
-        """Creates necessary database tables if they don't exist"""
-        # Users table for authentication
+        """Creates necessary database tables if they don't exist"""       
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY,
