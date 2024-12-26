@@ -813,24 +813,29 @@ class ViewCredentialsPage(Page):
             creds = self.parent.db.cursor.fetchone()
             
             if creds:
-                try:
-                    # Decrypt and display credentials
-                    twitch = self.parent.db.decrypt(creds[0]) if creds[0] else "Not set"
-                    discord = self.parent.db.decrypt(creds[1]) if creds[1] else "Not set" 
-                    steam = self.parent.db.decrypt(creds[2]) if creds[2] else "Not set"
+                # Decrypt and display credentials
+                def decrypt_and_split(encrypted_cred):
+                    if not encrypted_cred:
+                        return ["Not set", "Not set"]
+                    try:
+                        decrypted = self.parent.db.decrypt(encrypted_cred)
+                        if ':' in decrypted:
+                            return decrypted.split(':')
+                        return ["Invalid format", "Invalid format"]
+                    except Exception:
+                        return ["Decryption failed", "Decryption failed"]
 
-                    # Split credentials into username and password with error handling
-                    twitch_parts = twitch.split(':') if twitch != "Not set" and ':' in twitch else ["Not set", "Not set"]
-                    discord_parts = discord.split(':') if discord != "Not set" and ':' in discord else ["Not set", "Not set"]
-                    steam_parts = steam.split(':') if steam != "Not set" and ':' in steam else ["Not set", "Not set"]
-                    
-                    # Update labels
-                    self.twitch_username_value.config(text=twitch_parts[0])
-                    self.twitch_password_value.config(text=twitch_parts[1])
-                    self.discord_username_value.config(text=discord_parts[0])
-                    self.discord_password_value.config(text=discord_parts[1])
-                    self.steam_username_value.config(text=steam_parts[0])
-                    self.steam_password_value.config(text=steam_parts[1])
+                twitch_parts = decrypt_and_split(creds[0])
+                discord_parts = decrypt_and_split(creds[1])
+                steam_parts = decrypt_and_split(creds[2])
+                
+                # Update labels
+                self.twitch_username_value.config(text=twitch_parts[0])
+                self.twitch_password_value.config(text=twitch_parts[1])
+                self.discord_username_value.config(text=discord_parts[0])
+                self.discord_password_value.config(text=discord_parts[1])
+                self.steam_username_value.config(text=steam_parts[0])
+                self.steam_password_value.config(text=steam_parts[1])
                 except Exception as e:
                     messagebox.showerror("Error", f"Failed to decrypt credentials: {str(e)}")
             else:
