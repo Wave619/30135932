@@ -836,8 +836,6 @@ class ViewCredentialsPage(Page):
                 self.discord_password_value.config(text=discord_parts[1])
                 self.steam_username_value.config(text=steam_parts[0])
                 self.steam_password_value.config(text=steam_parts[1])
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to decrypt credentials: {str(e)}")
             else:
                 # Set "No credentials stored" for all fields
                 self.twitch_username_value.config(text="No credentials stored")
