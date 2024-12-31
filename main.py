@@ -186,14 +186,17 @@ class Database:
     def store_gaming_credentials(self, username, twitch, discord, steam):
         """Stores encrypted gaming credentials in database"""
         try:
-            # Only encrypt and store non-empty credentials
-            encrypted_twitch = self.encrypt(twitch) if twitch and ':' in twitch and all(twitch.split(':')) else None
-            encrypted_discord = self.encrypt(discord) if discord and ':' in discord and all(discord.split(':')) else None
-            encrypted_steam = self.encrypt(steam) if steam and ':' in steam and all(steam.split(':')) else None
+            # Encrypt credentials before storage
+            if twitch:
+                twitch = self.encrypt(twitch)
+            if discord:
+                discord = self.encrypt(discord)
+            if steam:
+                steam = self.encrypt(steam)
 
             self.cursor.execute(
                 '''INSERT OR REPLACE INTO gaming_credentials (username, twitch, discord, steam) 
-                   VALUES (?, ?, ?, ?)''', (username, encrypted_twitch, encrypted_discord, encrypted_steam))
+                   VALUES (?, ?, ?, ?)''', (username, twitch, discord, steam))
             self.connection.commit()
         except sqlite3.Error as e:
             messagebox.showerror("Database Error",
@@ -235,34 +238,62 @@ class Database:
             if not credentials:
                 return
 
+            # Decrypt stored credentials
+            
+            try:
+                twitch = self.decrypt(credentials[0]) if credentials[0] else None
+            except Exception as e:
+                twitch = None
+                print(f"Error decrypting Twitch credentials: {str(e)}")
+
+            try:
+                discord = self.decrypt(credentials[1]) if credentials[1] else None
+            except Exception as e:
+                discord = None
+                print(f"Error decrypting Discord credentials: {str(e)}")
+
+            try:
+                steam = self.decrypt(credentials[2]) if credentials[2] else None
+            except Exception as e:
+                steam = None
+                print(f"Error decrypting Steam credentials: {str(e)}")
+
+
+
+            # Check if passwords are compromised
             compromised_services = []
-            
-            # Check each service's credentials separately
-            services = [(credentials[0], "Twitch"), 
-                       (credentials[1], "Discord"), 
-                       (credentials[2], "Steam")]
-            
-            for encrypted_cred, service_name in services:
-                if not encrypted_cred:
-                    continue
-                    
+            if twitch and ':' in twitch:
                 try:
-                    decrypted = self.decrypt(encrypted_cred)
-                    if ':' not in decrypted:
-                        continue
-                        
-                    username, password = decrypted.split(':')
-                    # Check if this specific service's password is compromised
-                    if password in compromised_data:
-                        # Show individual warning for each compromised service
-                        messagebox.showwarning(
-                            "Compromised Password Detected",
-                            f"Your password for {service_name} has been compromised.\n"
-                            "Please view the Incident Response page as soon as possible."
-                        )
-                        
-                except Exception as e:
-                    print(f"Error processing {service_name} credentials: {str(e)}")
+                    twitch_password = twitch.split(':')[1]
+                    if twitch_password in compromised_data:
+                        compromised_services.append("Twitch")
+                except IndexError:
+                    print("Malformed Twitch credentials")
+                    
+            if discord and ':' in discord:
+                try:
+                    discord_password = discord.split(':')[1]
+                    if discord_password in compromised_data:
+                        compromised_services.append("Discord")
+                except IndexError:
+                    print("Malformed Discord credentials")
+                    
+            if steam and ':' in steam:
+                try:
+                    steam_password = steam.split(':')[1]
+                    if steam_password in compromised_data:
+                        compromised_services.append("Steam")
+                except IndexError:
+                    print("Malformed Steam credentials")
+
+            # Show alert if any passwords are compromised
+            if compromised_services:
+                service_list = ", ".join(compromised_services)
+                messagebox.showwarning(
+                    "Compromised Password Detected",
+                    f"Your password for {service_list} has been compromised.\n"
+                    "Please view the Incident Response page as soon as possible."
+                )
         except Exception as e:
             messagebox.showerror(
                 "Error", f"Failed to check compromised passwords: {str(e)}")
@@ -775,11 +806,6 @@ class ViewCredentialsPage(Page):
     def load_credentials(self):
         """Load and display stored credentials"""
         try:
-            # Ensure we have a logged in user
-            if not self.parent.logged_in_user:
-                messagebox.showerror("Error", "No user is currently logged in")
-                return
-                
             # Get credentials from database
             self.parent.db.cursor.execute(
                 "SELECT twitch, discord, steam FROM gaming_credentials WHERE username = ?",
