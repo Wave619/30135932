@@ -240,7 +240,7 @@ class Database:
 
             compromised_services = []
             
-            # Check each service's credentials separately to ensure accurate reporting
+            # Check each service's credentials separately
             services = [(credentials[0], "Twitch"), 
                        (credentials[1], "Discord"), 
                        (credentials[2], "Steam")]
@@ -255,21 +255,17 @@ class Database:
                         continue
                         
                     username, password = decrypted.split(':')
-                    # Only add to compromised services if this specific password is compromised
+                    # Check if this specific service's password is compromised
                     if password in compromised_data:
-                        compromised_services.append(service_name)
+                        # Show individual warning for each compromised service
+                        messagebox.showwarning(
+                            "Compromised Password Detected",
+                            f"Your password for {service_name} has been compromised.\n"
+                            "Please view the Incident Response page as soon as possible."
+                        )
                         
                 except Exception as e:
                     print(f"Error processing {service_name} credentials: {str(e)}")
-
-            # Show alert if any passwords are compromised
-            if compromised_services:
-                service_list = ", ".join(compromised_services)
-                messagebox.showwarning(
-                    "Compromised Password Detected",
-                    f"Your password for {service_list} has been compromised.\n"
-                    "Please view the Incident Response page as soon as possible."
-                )
         except Exception as e:
             messagebox.showerror(
                 "Error", f"Failed to check compromised passwords: {str(e)}")
