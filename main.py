@@ -186,17 +186,14 @@ class Database:
     def store_gaming_credentials(self, username, twitch, discord, steam):
         """Stores encrypted gaming credentials in database"""
         try:
-            # Encrypt credentials before storage
-            if twitch:
-                twitch = self.encrypt(twitch)
-            if discord:
-                discord = self.encrypt(discord)
-            if steam:
-                steam = self.encrypt(steam)
+            # Only encrypt and store non-empty credentials
+            encrypted_twitch = self.encrypt(twitch) if twitch and ':' in twitch and all(twitch.split(':')) else None
+            encrypted_discord = self.encrypt(discord) if discord and ':' in discord and all(discord.split(':')) else None
+            encrypted_steam = self.encrypt(steam) if steam and ':' in steam and all(steam.split(':')) else None
 
             self.cursor.execute(
                 '''INSERT OR REPLACE INTO gaming_credentials (username, twitch, discord, steam) 
-                   VALUES (?, ?, ?, ?)''', (username, twitch, discord, steam))
+                   VALUES (?, ?, ?, ?)''', (username, encrypted_twitch, encrypted_discord, encrypted_steam))
             self.connection.commit()
         except sqlite3.Error as e:
             messagebox.showerror("Database Error",
