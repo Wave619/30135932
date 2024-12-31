@@ -238,53 +238,32 @@ class Database:
             if not credentials:
                 return
 
-            # Decrypt stored credentials
-            
-            try:
-                twitch = self.decrypt(credentials[0]) if credentials[0] else None
-            except Exception as e:
-                twitch = None
-                print(f"Error decrypting Twitch credentials: {str(e)}")
-
-            try:
-                discord = self.decrypt(credentials[1]) if credentials[1] else None
-            except Exception as e:
-                discord = None
-                print(f"Error decrypting Discord credentials: {str(e)}")
-
-            try:
-                steam = self.decrypt(credentials[2]) if credentials[2] else None
-            except Exception as e:
-                steam = None
-                print(f"Error decrypting Steam credentials: {str(e)}")
-
-
-
-            # Check if passwords are compromised
             compromised_services = []
-            if twitch and ':' in twitch:
-                try:
-                    twitch_password = twitch.split(':')[1]
-                    if twitch_password in compromised_data:
-                        compromised_services.append("Twitch")
-                except IndexError:
-                    print("Malformed Twitch credentials")
+            
+            # Check each service's credentials
+            services = [(credentials[0], "Twitch"), 
+                       (credentials[1], "Discord"), 
+                       (credentials[2], "Steam")]
+            
+            for encrypted_cred, service_name in services:
+                if not encrypted_cred:
+                    continue
                     
-            if discord and ':' in discord:
                 try:
-                    discord_password = discord.split(':')[1]
-                    if discord_password in compromised_data:
-                        compromised_services.append("Discord")
-                except IndexError:
-                    print("Malformed Discord credentials")
+                    decrypted = self.decrypt(encrypted_cred)
+                    if ':' not in decrypted:
+                        continue
+                        
+                    password = decrypted.split(':')[1]
+                    # Hash the password before comparing
+                    hashed_password = hashlib.sha256(password.encode()).hexdigest()
                     
-            if steam and ':' in steam:
-                try:
-                    steam_password = steam.split(':')[1]
-                    if steam_password in compromised_data:
-                        compromised_services.append("Steam")
-                except IndexError:
-                    print("Malformed Steam credentials")
+                    # Check both plain and hashed password
+                    if password in compromised_data or hashed_password in compromised_data:
+                        compromised_services.append(service_name)
+                        
+                except Exception as e:
+                    print(f"Error processing {service_name} credentials: {str(e)}")
 
             # Show alert if any passwords are compromised
             if compromised_services:
