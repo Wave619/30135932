@@ -785,6 +785,11 @@ class ViewCredentialsPage(Page):
     def load_credentials(self):
         """Load and display stored credentials"""
         try:
+            # Ensure we have a logged in user
+            if not self.parent.logged_in_user:
+                messagebox.showerror("Error", "No user is currently logged in")
+                return
+                
             # Get credentials from database
             self.parent.db.cursor.execute(
                 "SELECT twitch, discord, steam FROM gaming_credentials WHERE username = ?",
