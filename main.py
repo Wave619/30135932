@@ -148,24 +148,31 @@ class Database:
 
     def create_tables(self):
         """Creates necessary database tables if they don't exist"""       
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY,
-                password_hash TEXT NOT NULL
-            )
-        ''')
+        try:
+            self.cursor.execute('''DROP TABLE IF EXISTS gaming_credentials''')
+            self.cursor.execute('''DROP TABLE IF EXISTS users''')
+            
+            self.cursor.execute('''
+                CREATE TABLE users (
+                    username TEXT PRIMARY KEY,
+                    password_hash TEXT NOT NULL
+                )
+            ''')
 
-        # Gaming credentials table with encryption
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS gaming_credentials (
-                username TEXT PRIMARY KEY,
-                twitch TEXT,
-                discord TEXT,
-                steam TEXT,
-                FOREIGN KEY (username) REFERENCES users(username)
-            )
-        ''')
-        self.connection.commit()
+            # Gaming credentials table with encryption
+            self.cursor.execute('''
+                CREATE TABLE gaming_credentials (
+                    username TEXT PRIMARY KEY,
+                    twitch TEXT,
+                    discord TEXT,
+                    steam TEXT,
+                    FOREIGN KEY (username) REFERENCES users(username)
+                )
+            ''')
+            self.connection.commit()
+        except sqlite3.Error as e:
+            print(f"Database initialization error: {e}")
+            raise
 
     def encrypt(self, data):
         """Encrypts sensitive data using Fernet symmetric encryption"""
