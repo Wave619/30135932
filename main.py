@@ -380,24 +380,14 @@ class CreateAccountPage(Page):
         # Username input
         self.username_label_create = tk.Label(self, text="Username:")
         self.username_label_create.pack(pady=5)
-        self.username_frame = tk.Frame(self)
-        self.username_frame.pack(pady=5)
-        self.username_entry_create = tk.Entry(self.username_frame)
-        self.username_entry_create.pack(side="left")
-        self.username_count = tk.Label(self.username_frame, text="20")
-        self.username_count.pack(side="left", padx=5)
-        self.username_entry_create.bind("<KeyRelease>", self.update_username_count)
+        self.username_entry_create = tk.Entry(self)
+        self.username_entry_create.pack(pady=5)
 
         # Password input with strength meter
         self.password_label_create = tk.Label(self, text="Password:")
         self.password_label_create.pack(pady=5)
-        self.password_frame = tk.Frame(self)
-        self.password_frame.pack(pady=5)
-        self.password_entry_create = tk.Entry(self.password_frame, show="*")
-        self.password_entry_create.pack(side="left")
-        self.password_count = tk.Label(self.password_frame, text="20")
-        self.password_count.pack(side="left", padx=5)
-        self.password_entry_create.bind("<KeyRelease>", self.update_password_count)
+        self.password_entry_create = tk.Entry(self, show="*")
+        self.password_entry_create.pack(pady=5)
 
         # Password requirements display
         self.password_instructions = tk.Label(
@@ -440,24 +430,6 @@ class CreateAccountPage(Page):
             self.password_strength_label_create.config(
                 text="Password Strength: Invalid", fg="red")
 
-    def update_username_count(self, event=None):
-        """Updates the username character counter"""
-        text = self.username_entry_create.get()
-        if len(text) > 20:
-            self.username_entry_create.delete(20, tk.END)
-            text = self.username_entry_create.get()
-        remaining = 20 - len(text)
-        self.username_count.config(text=str(remaining))
-
-    def update_password_count(self, event=None):
-        """Updates the password character counter"""
-        text = self.password_entry_create.get()
-        if len(text) > 20:
-            self.password_entry_create.delete(20, tk.END)
-            text = self.password_entry_create.get()
-        remaining = 20 - len(text)
-        self.password_count.config(text=str(remaining))
-
     def create_account(self):
         """Handles account creation process"""
         username = self.username_entry_create.get()
@@ -481,24 +453,14 @@ class LoginPage(Page):
         # Username input
         self.username_label_login = tk.Label(self, text="Username:")
         self.username_label_login.pack(pady=5)
-        self.username_frame = tk.Frame(self)
-        self.username_frame.pack(pady=5)
-        self.username_entry_login = tk.Entry(self.username_frame)
-        self.username_entry_login.pack(side="left")
-        self.username_count = tk.Label(self.username_frame, text="20")
-        self.username_count.pack(side="left", padx=5)
-        self.username_entry_login.bind("<KeyRelease>", self.update_username_count)
+        self.username_entry_login = tk.Entry(self)
+        self.username_entry_login.pack(pady=5)
 
         # Password input
         self.password_label_login = tk.Label(self, text="Password:")
         self.password_label_login.pack(pady=5)
-        self.password_frame = tk.Frame(self)
-        self.password_frame.pack(pady=5)
-        self.password_entry_login = tk.Entry(self.password_frame, show="*")
-        self.password_entry_login.pack(side="left")
-        self.password_count = tk.Label(self.password_frame, text="20")
-        self.password_count.pack(side="left", padx=5)
-        self.password_entry_login.bind("<KeyRelease>", self.update_password_count)
+        self.password_entry_login = tk.Entry(self, show="*")
+        self.password_entry_login.pack(pady=5)
 
         # Login and navigation buttons
         self.login_button_final = tk.Button(self,
@@ -511,24 +473,6 @@ class LoginPage(Page):
             text="Back",
             command=lambda: self.parent.show_page("LandingPage"))
         self.back_to_landing_button_login.pack(pady=10)
-
-    def update_username_count(self, event=None):
-        """Updates the username character counter"""
-        text = self.username_entry_login.get()
-        if len(text) > 20:
-            self.username_entry_login.delete(20, tk.END)
-            text = self.username_entry_login.get()
-        remaining = 20 - len(text)
-        self.username_count.config(text=str(remaining))
-
-    def update_password_count(self, event=None):
-        """Updates the password character counter"""
-        text = self.password_entry_login.get()
-        if len(text) > 20:
-            self.password_entry_login.delete(20, tk.END)
-            text = self.password_entry_login.get()
-        remaining = 20 - len(text)
-        self.password_count.config(text=str(remaining))
 
     def login(self):
         """Processes login attempt with 2FA and handles login attempt limiting"""
